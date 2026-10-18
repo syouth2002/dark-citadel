@@ -1,5 +1,7 @@
 """Screenshots for the README (docs/images), taken from the game running in
-the headless model (tools/harness.py).  python tools/fps_shots.py"""
+the headless model (tools/harness.py).  python tools/fps_shots.py
+(docs/images/walk.gif is not made here: it is cut from a recording of real
+play in PC6001VW, so that it runs at the real speed.)"""
 import math
 import os
 import sys
@@ -100,10 +102,6 @@ for f in range(170):
 best = max(range(60, len(frames)), key=lambda i: depth[i])
 frames[best].save(os.path.join(OUT, 'explore.png'))
 print('saved explore.png (frame %d)' % best)
-small = [im.resize((480, 300), Image.NEAREST) for im in frames[::2]]
-small[0].save(os.path.join(OUT, 'walk.gif'), save_all=True, append_images=small[1:],
-              duration=80, loop=0, optimize=True)
-print('saved walk.gif (%d frames)' % len(small))
 
 # ---- the warden on the last floor, its health gauge half gone
 g = T.Game()

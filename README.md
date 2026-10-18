@@ -4,7 +4,9 @@
 
 An original first-person maze shooter for the NEC PC-6001mkII (Z80, 1983), written in Z80 assembly with a raycasting engine, speech-chip enemy voices and PSG music. Runs in the PC6001VW emulator or on real hardware from a cassette WAV.
 
-![歩き回る様子](docs/images/walk.gif)
+![PC6001VWでの実際のプレイ](docs/images/walk.gif)
+
+*PC6001VWでの実際のプレイ（録画から切り出し、実際の速さ）*
 
 ランタンの明かりだけを頼りに、闇に沈んだ城塞の13フロアを下から上へ抜けていく、一人称視点のシューティングです。
 レイキャスティング方式で壁や敵を立体的に描き、敵は音声合成LSI（μPD7752）でうめき声や断末魔を上げます。
@@ -170,7 +172,7 @@ python tools/cas2wav.py fps.cas fps.wav
 | `fps_still_test` | 立ち止まっている間の部分的な描き直しが、全部描き直したときと1バイトも違わないこと |
 | `fps_ab_test` | 2つのビルドで同じ操作をして、画面がフレームごとに同じか比べる（最適化の確認） |
 | `fps_test` / `fps_prof` | 速度の計測と、処理時間の内訳 |
-| `fps_shots` | このREADMEのスクリーンショット（`docs/images`）を作る |
+| `fps_shots` | このREADMEのスクリーンショット（`docs/images`、アニメーションGIFを除く）を作る |
 
 ## 技術メモ
 
