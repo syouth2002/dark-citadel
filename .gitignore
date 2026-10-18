@@ -1,0 +1,5 @@
+# build output (made by tools/build_fps.py and the tests)
+build/
+*.wav
+__pycache__/
+*.pyc
