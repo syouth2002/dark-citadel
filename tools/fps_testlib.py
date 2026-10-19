@@ -15,6 +15,8 @@ for _l in open(os.path.join(ROOT, 'src', 'fps_vars.inc')):
     if _l.startswith('v_'):
         _n, _, _v = _l.split()
         V[_n[2:]] = int(_v.rstrip('h'), 16)
+    elif _l.startswith('NEN '):
+        NEN = int(_l.split()[2])        # object slots
 LEVELS = fps_levels.all_levels()
 
 

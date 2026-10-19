@@ -88,12 +88,6 @@ st_rt:  ld (ix+0),l
         ld de,COLCOS                ; (col_cos follows col_ang)
         ld c,NCOL
         ldir
-        ; screen
-        ld hl,8000h
-        ld de,8001h
-        ld bc,7FFFh
-        ld (hl),0
-        ldir
         xor a
         out (0C0h),a
         ld a,08h
@@ -132,6 +126,12 @@ eg_l:   ld l,c                      ; a wall, as distance along the ray
         inc c
         jr nz,eg_l
         call mm_tables
+        ; the screens (and the start-up data beyond 7FFFh: unpacked by now)
+        ld hl,8000h
+        ld de,8001h
+        ld bc,7FFFh
+        ld (hl),0
+        ldir
         ld hl,v_pbot0
         ld b,NCOL
         call st_vh
@@ -147,6 +147,8 @@ eg_l:   ld l,c                      ; a wall, as distance along the ray
 #ifdef VTEST
         jp voice_test
 #endif
+        ld a,1                      ; (NORMAL until another is chosen)
+        ld (v_diff),a
         call title
         call new_game
 
@@ -2058,4 +2060,8 @@ s_help:  defb "SPC:FIRE  SHIFT:WEAPON",0
 
 #include "fps_game.asm"
 #include "fps_data.inc"
+; Everything from here on is used only at the start, before the screens are
+; cleared: it may lie beyond 7FFFh (loaded over the BASIC loader's text).
+rt_end:
+#include "fps_boot.inc"
 #include "fps_blob.inc"

@@ -14,7 +14,6 @@ E_CE    equ 12          ; last screen column (signed)
 E_VIS   equ 13          ; 1 = in view, 2 = drawn, +4 = at least one column on screen
 E_TOP   equ 14          ; top view row
 E_HS    equ 15          ; height in rows
-NEN     equ 24
 
 I_FIRE  equ 10h
 I_ALT   equ 20h             ; SHIFT / trigger B: the other weapon
@@ -39,11 +38,16 @@ OIL_TIME equ 400        ; frames (about a minute)
 new_game:
         ld a,100
         ld (v_hp),a
-        ld a,(v_debug)              ; 50 rounds; a debug game starts with 99
-        or a
-        ld a,50
-        jr z,ng_1
+        ld a,(v_debug)              ; a debug game starts with 99 rounds,
+        or a                        ; others by the difficulty
         ld a,99
+        jr nz,ng_1
+        ld a,(v_diff)
+        ld e,a
+        ld d,0
+        ld hl,ng_ammo
+        add hl,de
+        ld a,(hl)
 ng_1:   ld (v_ammo),a
         ld hl,0
         ld (v_gsecs),hl
@@ -61,17 +65,25 @@ ng_1:   ld (v_ammo),a
 ng_2:   ld a,(v_startlv)            ; 0, or the floor chosen (debug, password)
         ld (v_level),a
         jp start_level
+ng_ammo: defb 50,30,0               ; rounds at the start: EASY, NORMAL, HARD
 
 restart_level:
         ld a,100
         ld (v_hp),a
         xor a
         ld (v_hurt),a
-        ld a,(v_level)              ; at least 30 rounds, 3 more per floor
-        ld b,a                      ; (63 on floor 12)
+        ld a,(v_diff)               ; rounds made up to: EASY 30, 3 more
+        cp 2                        ; a floor; NORMAL 20, 2 more a floor;
+        jr z,start_level            ; HARD none
+        ld c,a
+        ld a,(v_level)
+        ld b,a
         add a,a
+        dec c
+        jr z,rl_h
         add a,b
-        add a,30
+        add a,10
+rl_h:   add a,20
         ld b,a
         ld a,(v_ammo)
         cp b
@@ -139,6 +151,9 @@ sl_wp:  ld (v_weapon),a
         ld d,0
         xor a
         ld (v_boss),a
+        ld (v_hcnt),a
+        ld (v_acnt),a
+        ld (v_xdone),a
         ld ix,level_tbl
         add ix,de
         ld hl,v_map                 ; walls all round (and outside), the
@@ -319,12 +334,66 @@ sl_nw:
         inc a
         ld (v_nenemy),a
         jr sl_n
-sl_it:  ld a,(v_nitems)
+sl_it:  cp T_HEALTH                  ; NORMAL / HARD: half the health items
+        ld de,v_hcnt                ; and half the ammo items
+        jr z,sl_i0                  ; (the 1st, 3rd ... stay)
+        cp T_AMMO
+        jr nz,sl_i1
+        ld de,v_acnt
+sl_i0:  ld a,(v_diff)
+        or a
+        jr z,sl_i1
+        ld a,(de)
+        xor 1
+        ld (de),a
+        jr nz,sl_i1
+        ld (ix+E_T),a
+        jr sl_n
+sl_i1:  ld a,(v_nitems)
         inc a
         ld (v_nitems),a
 sl_n:   ld de,16
         add ix,de
-        djnz sl_o
+        dec b
+        jp nz,sl_o
+        ld a,(v_xdone)              ; then the extra enemies: NORMAL the first
+        or a                        ; half (rounded up), HARD all
+        jr nz,sl_x9
+        inc a
+        ld (v_xdone),a
+        ld a,(v_diff)
+        or a
+        jr z,sl_x9
+        ld c,a
+        ld a,(v_level)
+        add a,a
+        ld e,a
+        ld d,0
+        ld hl,extra_tbl
+        add hl,de
+        ld a,(hl)
+        inc hl
+        ld h,(hl)
+        ld l,a
+        ld b,(hl)
+        inc hl
+        dec c
+        jr nz,sl_x1
+        inc b
+        srl b
+sl_x1:  inc b
+        dec b
+        jp nz,sl_o
+sl_x9:  push ix                     ; the slots in use
+        pop hl
+        ld de,-v_enemies
+        add hl,de
+        add hl,hl
+        add hl,hl
+        add hl,hl
+        add hl,hl
+        ld a,h
+        ld (v_nobj),a
         ; view: plane 1 = colour group of this floor, plane 0 cleared; repaint all
         ld a,80h
         call view_reset
@@ -445,7 +514,7 @@ intermission:
         inc a
         cp NLEVEL
         jr c,in_1
-        ld hl,(v_best)
+        call best_get
         ld a,h
         or l
         jr z,in_new
@@ -454,8 +523,11 @@ intermission:
         sbc hl,de
         jr c,in_1
         jr z,in_1
-in_new: ld hl,(v_gsecs)
-        ld (v_best),hl
+in_new: call best_ptr
+        ld de,(v_gsecs)
+        ld (hl),e
+        inc hl
+        ld (hl),d
         ld a,1
         ld (v_record),a
 in_1:   ld a,2
@@ -539,9 +611,28 @@ ti_c0:  xor a                       ; wrong: start again (an extra "up"
         jr nz,ti_c1
         inc a
 ti_c1:  ld (v_cheat),a
-ti_w3:  ld a,b
+ti_w3:  ld a,b                       ; left / right: the difficulty
+        and 0Ch                     ; (round and round: the hidden command,
+        jr z,ti_w4                  ; left right left right, leaves it be)
+        ld c,1
+        and 8
+        jr nz,ti_d1
+        inc c                       ; (left: 2 on = 1 back)
+ti_d1:  ld a,(v_diff)
+        add a,c
+        cp 3
+        jr c,ti_d2
+        sub 3
+ti_d2:  ld (v_diff),a
+        push bc
+        ld a,80h
+        call ti_page
+        ld a,0C0h
+        call ti_page
+        pop bc
+ti_w4:  ld a,b
         and I_FIRE
-        jr z,ti_w2
+        jp z,ti_w2
         ret
 ; the password: right -> start there; wrong -> say so, the title again
 ti_pw:  call pw_entry
@@ -623,21 +714,59 @@ tp_2:   ld (hl),0
         ld hl,s_ti_pw
         ld de,(8 << 8) | (VY0+62)
         call draw_text
-        ld hl,(v_best)
+        ld hl,s_ti_df
+        ld de,(5 << 8) | (VY0+74)
+        call draw_text
+        ld a,14
+        call set_color
+        call diff_name
+        ld de,(18 << 8) | (VY0+74)
+        call draw_text
+        call best_get               ; (this difficulty's)
         ld a,h
         or l
         jr z,tp_3
         push hl
-        ld a,14
-        call set_color
         ld hl,s_best
-        ld de,(9 << 8) | (VY0+72)
+        ld de,(9 << 8) | (VY0+84)
         call draw_text
         pop hl
-        ld de,(19 << 8) | (VY0+72)
+        ld de,(19 << 8) | (VY0+84)
         call draw_time
-tp_3:   ld de,(10 << 8) | (VY0+84)
+tp_3:   ld de,(10 << 8) | (VY0+96)
         jp im_sp
+
+; HL -> this difficulty's best time / HL = it (0: none yet)
+best_ptr:
+        ld a,(v_diff)
+        add a,a
+        ld e,a
+        ld d,0
+        ld hl,v_best
+        add hl,de
+        ret
+best_get:
+        call best_ptr
+        ld a,(hl)
+        inc hl
+        ld h,(hl)
+        ld l,a
+        ret
+; HL = the difficulty's name (6 characters)
+diff_name:
+        ld a,(v_diff)
+        ld e,a
+        add a,a
+        add a,a
+        add a,a
+        sub e                       ; * 7
+        ld e,a
+        ld d,0
+        ld hl,s_diffs
+        add hl,de
+        ret
+s_diffs:    defb "EASY  ",0,"NORMAL",0,"HARD  ",0
+s_ti_df:    defb "DIFFICULTY <        >",0
 
 tp_clr: ld d,h
         ld e,l
@@ -758,7 +887,7 @@ im_fin: ld a,13
         ld a,(v_deaths)
         ld de,(19 << 8) | (VY0+48)
         call draw_num3
-        ld hl,(v_best)
+        call best_get
         ld de,(19 << 8) | (VY0+58)
         call draw_time
         ld a,(v_record)
@@ -1033,9 +1162,9 @@ pw_entry:
         ret
 #else
 ; ----------------------------------------------------------------------------
-;  passwords: 4 characters for the next floor, health and rounds.
-;  20 bits: checksum (4) | floor (4) | rounds (7) | health / 4 (5), scrambled,
-;  5 bits a character from the low end
+;  passwords: 5 characters for the next floor, health, rounds, difficulty.
+;  24 bits: checksum (6) | difficulty (2) | floor (4) | rounds (7) |
+;  health / 4 (5), scrambled, 5 bits a character from the low end
 ; ----------------------------------------------------------------------------
 PW_K0   equ 0A3h
 PW_K1   equ 0C5h
@@ -1051,8 +1180,13 @@ pw_make:
         ld e,a                      ; health / 4, rounded up (1..25)
         ld a,(v_ammo)
         ld c,a
+        ld a,(v_diff)
+        ld h,a
         call pw_sum
-        ld b,a                      ; checksum
+        add a,a
+        add a,a
+        or h
+        ld b,a                      ; checksum << 2 | difficulty
         ld h,0
         ld l,c
         add hl,hl
@@ -1081,7 +1215,7 @@ pw_make:
         xor PW_K2
         ld e,a
         ld ix,v_pwtext
-        ld b,4
+        ld b,5
 pm_1:   ld a,l
         and 31
         push hl
@@ -1103,21 +1237,25 @@ pm_3:   srl e
         djnz pm_1
         ld (ix+0),0
         ret
-; D floor, C rounds, E health/4 -> A checksum (4 bits)
+; D floor, C rounds, E health/4, H difficulty -> A checksum (6 bits)
 pw_sum: ld a,d
         add a,c
         add a,e
         add a,d
+        add a,h
+        add a,h
+        add a,h
         add a,7
-        and 15
+        and 63
         ret
 
-; v_pwtext (4 characters) -> Z and v_startlv, v_pwhp, v_pwammo, v_pw if right
+; v_pwtext (5 characters) -> Z and v_startlv, v_pwhp, v_pwammo, v_diff, v_pw
+; if right
 pw_check:
         ld hl,0
         ld e,l
-        ld ix,v_pwtext+3
-        ld b,4
+        ld ix,v_pwtext+4
+        ld b,5
 pc_1:   ld c,5                      ; make room for 5 more bits
 pc_2:   add hl,hl
         rl e
@@ -1140,7 +1278,7 @@ pc_2:   add hl,hl
         ld h,a
         ld a,e
         xor PW_K2
-        ld b,a                      ; checksum
+        ld b,a                      ; checksum << 2 | difficulty
         ld a,l
         and 31
         ld e,a                      ; health / 4
@@ -1156,8 +1294,18 @@ pc_2:   add hl,hl
         add hl,hl
         ld c,h
         res 7,c                     ; rounds
+        ld a,b
+        and 3
+        cp 3
+        jr z,pc_bad
+        ld h,a                      ; difficulty
         call pw_sum
-        cp b
+        ld l,a
+        ld a,b
+        rrca
+        rrca
+        and 63
+        cp l
         ret nz
         ld a,d                      ; floor 1..NLEVEL-1 (from the 2nd on)
         dec a
@@ -1172,6 +1320,9 @@ pc_2:   add hl,hl
         jr nc,pc_bad
         ld a,d
         ld (v_startlv),a
+        ld a,b
+        and 3
+        ld (v_diff),a
         ld a,c
         ld (v_pwammo),a
         ld a,e
@@ -1201,13 +1352,13 @@ pwi_2:   ld a,c
         ret
 pw_abc: defb "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
 
-; type 4 characters on the title (shown as they come) -> Z if right
+; type 5 characters on the title (shown as they come) -> Z if right
 pw_entry:
         xor a
         ld (v_lastkey),a
         ld (v_pwn),a
         ld hl,v_pwtext
-        ld b,4
+        ld b,5
 pe_0:   ld (hl),'-'
         inc hl
         djnz pe_0
@@ -1236,7 +1387,7 @@ pe_1:   push af
         ld (hl),b
         inc a
         ld (v_pwn),a
-        cp 4
+        cp 5
         jr nz,pe_lp
         call pe_show
         jp pw_check
@@ -1581,7 +1732,8 @@ pf_axe: ld a,8                      ; the axe: a slower blow, close only
 pf_aim: ld (v_s_dep),hl         ; best depth so far (wall, or the axe's reach)
         ld iy,0
         ld ix,v_enemies
-        ld b,NEN
+        ld a,(v_nobj)
+        ld b,a
 pf_lp:  ld a,(ix+E_T)
         or a
         jr z,pf_nx
@@ -1656,7 +1808,8 @@ pf_empty:
 ; ----------------------------------------------------------------------------
 update_enemies:
         ld ix,v_enemies
-        ld b,NEN
+        ld a,(v_nobj)               ; (only the slots in use)
+        ld b,a
 ue_lp:  push bc
         ld a,(ix+E_T)
         or a
@@ -1740,8 +1893,13 @@ ei_h:   ld (v_hp),a
         jr ei_take
 ei_a:   cp T_AMMO
         jr nz,ei_k
-        ld a,(v_ammo)
-        add a,12
+        ld a,(v_diff)               ; (HARD: half)
+        cp 2
+        ld b,12
+        jr nz,ei_a0
+        ld b,6
+ei_a0:  ld a,(v_ammo)
+        add a,b
         cp 100
         jr c,ei_a1
         ld a,99
@@ -1858,7 +2016,7 @@ e_par:  ld a,(ix+E_T)
 e_tbl:  defb 18,6,8                 ; husk
         defb 12,5,5                 ; orb (keeps away and shoots)
         defb 10,9,20                ; brute: slow, slow blow, hits hard
-        defb 30,3,5                 ; stalker: fast, quick, light
+        defb 38,3,5                 ; stalker: fast, quick, light
 e_hp:   defb 3,4,8,2,30             ; shots to bring them down
 
 eo_orb: ; sentinel: keep some distance, shoot now and then
@@ -2140,7 +2298,17 @@ hurt_player:
         call hurt_side
         pop af
         ld b,a
-        ld a,(v_god)
+        ld a,(v_diff)               ; NORMAL: half as much again, HARD: twice
+        or a
+        jr z,hp_g
+        ld c,b
+        dec a
+        jr nz,hp_x
+        srl c
+hp_x:   ld a,b
+        add a,c
+        ld b,a
+hp_g:   ld a,(v_god)
         or a
         jr z,hp_0
         ld b,0                      ; invincible (debug)
@@ -2208,7 +2376,8 @@ mc_4:   ld a,(v_e_sgn)
 
 calc_sprites:
         ld ix,v_enemies
-        ld b,NEN
+        ld a,(v_nobj)
+        ld b,a
 cs_lp:  push bc
         ld (ix+E_VIS),0
         ld a,(ix+E_T)
@@ -2474,7 +2643,8 @@ ds_next:
         ld iy,0
         ld hl,0
         ld ix,v_enemies
-        ld b,NEN
+        ld a,(v_nobj)
+        ld b,a
 ds_f:   ld a,(ix+E_VIS)
         cp 1
         jr nz,ds_fn
@@ -3151,7 +3321,10 @@ st_o1:  ld de,(23 << 8) | L2_Y
         ld hl,s_nodebug
         ld a,(v_debug)
         or a
-        jr z,st_d1
+        jr nz,st_d0
+        call diff_name              ; the difficulty
+        jr st_d1
+st_d0:  ld a,(v_debug)
         ld hl,s_debug
         ld a,(v_god)
         or a

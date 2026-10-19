@@ -13,6 +13,10 @@ N = 24                       # floor size (cells)
 ROOM_MIN = 3                 # smallest room side (cells)
 ROOMS = (7, 18)              # rooms per floor (fewest, most)
 FLOORS = 13                  # the warden waits on the last
+NOBJ = 40                    # objects a floor may hold with its extra enemies
+KIND_T = {'h': 1, 'e': 2, 'b': 3, 's': 4}
+EXTRAS = {}                  # floor -> extra enemies [(type, x, y)] (make)
+_last_extras = []
 
 
 def _flood(g, x, y, seen):
@@ -196,7 +200,24 @@ def generate(seed, floor):
                 used.add(c)
                 objs.append((kind, c))
                 break
-    assert len(objs) <= 24
+    # the extra enemies of the harder difficulties: as many again, of the same
+    # kinds, on free cells out of the start room (NORMAL takes the first half,
+    # HARD all of them)
+    kinds = [k for k, c in objs if k in KIND_T]
+    rnd.shuffle(kinds)
+    extras = []
+    for kind in kinds:
+        while others:
+            c = others.pop()
+            if c not in used and abs(c[0] - px) + abs(c[1] - py) >= 3:
+                used.add(c)
+                extras.append((KIND_T[kind], c[0], c[1]))
+                break
+    if len(extras) < len(kinds):
+        raise ValueError('no room for the extra enemies')
+    assert len(objs) + len(extras) <= NOBJ
+    global _last_extras
+    _last_extras = extras
     for kind, (x, y) in objs:
         g[y][x] = kind
     g[py][px] = 'P'
@@ -222,5 +243,6 @@ def make(floor, base_seed):
             fps_gen.check_level(cells, objs, start)
         except AssertionError:
             continue
+        EXTRAS[floor] = _last_extras
         return rows
     raise RuntimeError('no valid floor for %d' % floor)

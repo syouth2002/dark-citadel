@@ -205,6 +205,10 @@ def fps_start(p6, auto_map=False):
         p6.run_cycles(cpu // 5)
         p6.stick = 0
         p6.run_cycles(cpu // 5)
+    p6.stick = 0x20                     # left: EASY (the tests were written for it)
+    p6.run_cycles(cpu // 8)
+    p6.stick = 0
+    p6.run_cycles(cpu // 8)
     p6.stick = 0x80
     p6.run_cycles(cpu // 5)
     p6.stick = 0

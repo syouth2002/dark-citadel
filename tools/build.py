@@ -21,6 +21,7 @@ T_PRINT, T_CLEAR, T_EXEC, T_TO, T_EQ = 0x95, 0x99, 0xA5, 0xC3, 0xD2
 
 STUB_ADDR = 0xF000
 LOAD_ADDR = 0x4000
+LOAD_TOP = 0xC000             # (8000h-BFFFh: the loader's BASIC text, free once it runs)
 BASIC_START = 0x8001          # mode 5, any page count is relinked below
 
 
@@ -97,7 +98,7 @@ def build(asm, cas, name, title, entry=LOAD_ADDR):
     if r.stderr.strip():
         print(r.stderr)
     code = open(binf, 'rb').read()
-    if LOAD_ADDR + len(code) > 0x8000:
+    if LOAD_ADDR + len(code) > LOAD_TOP:
         sys.exit('binary too large: %d bytes' % len(code))
     st = stub(entry)
     tape = bytearray()

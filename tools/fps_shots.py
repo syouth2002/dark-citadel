@@ -39,10 +39,19 @@ def to_floor(g, lv):
         g.frame(0, 3)
 
 
+def game():
+    """a game at NORMAL (the difficulty most will play), still on floor 1"""
+    g = T.Game()
+    g.m[V['diff']] = 1
+    g.m[V['ammo']] = 30                    # (NORMAL's rounds at the start)
+    g.m[V['hud_dirty']] = 2
+    return g
+
+
 def place(g, objs):
     """only these objects on the floor: (type, x, y, state)"""
     m = g.m
-    for i in range(24):
+    for i in range(T.NEN):
         m[E + i * 16] = 0
     for i, (ty, x, y, st) in enumerate(objs):
         b = E + i * 16
@@ -57,7 +66,7 @@ p6.run_cycles(CPU * 2)
 save(p6, 'title.png')
 
 # ---- in the corridors: a husk, a sentinel and a brute ahead, a round fired
-g = T.Game()
+g = game()
 to_floor(g, 3)
 g.god()
 g.m[V['god']] = 1
@@ -72,7 +81,7 @@ save(g.p6, 'combat.png')
 
 # ---- exploring: the auto map fills in as the lantern reaches the walls
 # (a walk that keeps to the corridors: turn while the way ahead is shut)
-g = T.Game()
+g = game()
 to_floor(g, 1)
 g.m[V['god']] = 1
 cells, _, _ = T.level(1)
@@ -104,16 +113,16 @@ frames[best].save(os.path.join(OUT, 'explore.png'))
 print('saved explore.png (frame %d)' % best)
 
 # ---- the warden on the last floor, its health gauge half gone
-g = T.Game()
+g = game()
 to_floor(g, NL - 1)
 m = g.m
 g.m[V['god']] = 1
 cells, objs, _ = T.level(NL - 1)
 wx, wy = next((x, y) for ty, x, y in objs if ty == 5)
-for i in range(24):                        # the warden alone
+for i in range(T.NEN):                        # the warden alone
     if 1 <= m[E + i * 16] <= 4:
         m[E + i * 16] = 0
-b = next(E + i * 16 for i in range(24) if m[E + i * 16] == 5)
+b = next(E + i * 16 for i in range(T.NEN) if m[E + i * 16] == 5)
 spot = None
 for k in (4, 3):
     for dx, dy, ang in ((-1, 0, 0), (1, 0, 128), (0, -1, 64), (0, 1, 192)):
@@ -138,21 +147,22 @@ for f in range(120):
 g.frame(0, 2)
 save(g.p6, 'warden.png')
 
-# ---- a floor cleared: the tally and the password for the next floor
-g = T.Game()
+# ---- a floor cleared (floor 2): the tally and the password for the next floor
+g = game()
+to_floor(g, 1)
 g.m[V['god']] = 1
-cells, _, _ = T.level(0)
+cells, _, _ = T.level(1)
 ex = next((x, y) for (x, y), v in cells.items() if v == 7)
 g.approach(*ex)
 g.p6.run_cycles(CPU)
 save(g.p6, 'tally.png')
 
 # ---- the ending: dawn over the citadel (the warden gone, out by the exit)
-g = T.Game()
+g = game()
 to_floor(g, NL - 1)
 m = g.m
 m[V['god']] = 1
-for i in range(24):
+for i in range(T.NEN):
     if m[E + i * 16] == 5:
         m[E + i * 16] = 0
 m[V['boss']] = 0

@@ -9,7 +9,7 @@ import harness as H
 import fps_gen
 
 ROOT = H.ROOT
-data = open(os.path.join(ROOT, 'src', 'fps_data.inc')).read()
+data = ''.join(open(os.path.join(ROOT, 'src', f)).read() for f in ('fps_data.inc', 'fps_boot.inc'))
 EQ = {m.group(1): int(m.group(2), 16)
       for m in re.finditer(r'(\w+)\s+equ\s+0?([0-9A-F]+)h', data)}
 EQ['NTEX_PACKED'] = int(re.search(r'NTEX_PACKED\s+equ\s+(\d+)', data).group(1))

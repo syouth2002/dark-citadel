@@ -12,7 +12,7 @@ import fps_testlib as T
 
 V = T.V
 LANTERN = 5
-data = open(os.path.join(T.ROOT, 'src', 'fps_data.inc')).read()
+data = ''.join(open(os.path.join(T.ROOT, 'src', f)).read() for f in ('fps_data.inc', 'fps_boot.inc'))
 
 
 def defb(lbl):

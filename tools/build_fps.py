@@ -21,7 +21,6 @@ EXPORT = ['tex_gun', 'tex_gunf', 'tex_axe', 'tex_axes', 'level_tbl', 'voice_tbl'
 def main():
     bdir = os.path.join(ROOT, 'build')
     os.makedirs(bdir, exist_ok=True)
-    os.makedirs(bdir, exist_ok=True)
     binf = os.path.join(bdir, 'fps_ram.bin')
     mapf = os.path.join(bdir, 'fps_ram.map')
     r = subprocess.run(['zxbasm', os.path.join(ROOT, 'src', 'fps_ram.asm'), '-o', binf, '-M', mapf],
@@ -50,6 +49,15 @@ def main():
           (len(data), RAM_DATA, RAM_DATA + len(data) - 1, len(blob)))
     build.build(os.path.join(ROOT, 'src', 'fps.asm'), os.path.join(ROOT, 'fps.cas'), 'CITADL', 'DARK CITADEL')
     build.build(os.path.join(ROOT, 'src', 'vtest.asm'), os.path.join(ROOT, 'vtest.cas'), 'VTEST', 'VOICE TEST')
+    # what is used after the start must lie below the screens (8000h)
+    for name in ('fps', 'vtest'):
+        for line in open(os.path.join(bdir, name + '.map')):
+            a, _, n = line.strip().partition(': ')
+            if n.strip().lstrip('.') == 'rt_end':
+                rt = int(a, 16)
+        if rt > 0x8000:
+            sys.exit('%s: the program proper ends at %04X, beyond 7FFFh' % (name, rt))
+        print('%s: program proper 4000-%04X (%d bytes free below 8000h)' % (name, rt - 1, 0x8000 - rt))
 
 
 if __name__ == '__main__':
