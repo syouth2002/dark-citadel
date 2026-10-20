@@ -12,9 +12,11 @@ import build
 import lz
 
 ROOT = build.ROOT
-RAM_DATA = 0x27E0                # (after the sprites; see fps_gen.RAM_DATA)
-RAM_TOP = 0x3700                 # edge table 3700h / 3800h, row tables 3D00h / 3E00h, the stack (from 4000h)
-EXPORT = ['tex_gun', 'tex_gunf', 'tex_axe', 'tex_axes', 'level_tbl', 'voice_tbl',
+# RAM_DATA: after the sprites (fps_gen.py writes it as the org of fps_ram.inc)
+RAM_DATA = int(open(os.path.join(ROOT, 'src', 'fps_ram.inc')).read().split('org 0')[1][:4], 16)
+RAM_TOP = 0x3900                 # map tables 3900h / 3A00h, edge table 3B00h / 3C00h,
+                                 # row tables 3D00h / 3E00h, the stack (from 4000h)
+EXPORT = ['tex_gun', 'tex_gunf', 'tex_axe', 'tex_axes', 'extra_tbl', 'voice_tbl',
           'voice_pri', 'bgm_per', 'bgm_tbl']
 
 

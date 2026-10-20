@@ -109,7 +109,7 @@ for d in range(3):
 # ammo items: every second one gone on NORMAL / HARD
 for lv in (0, 4, 9, LAST):
     _, objs, _ = T.level(lv)
-    k = sum(1 for ty, x, y in objs if 1 <= ty <= 4)
+    k = sum(1 for ty, x, y in objs if 1 <= ty <= 4 or 11 <= ty <= 13)
     w = sum(1 for ty, x, y in objs if ty == 5)
     nh = sum(1 for ty, x, y in objs if ty == T_HEALTH)
     na = sum(1 for ty, x, y in objs if ty == T_AMMO)
@@ -118,7 +118,7 @@ for lv in (0, 4, 9, LAST):
         g = game(d, lv)
         m = g.m
         slots = [m[E + i * 16] for i in range(T.NEN)]
-        en.append((sum(1 for s in slots if 1 <= s <= 5), m[V['nenemy']]))
+        en.append((sum(1 for s in slots if 1 <= s <= 5 or 11 <= s <= 13), m[V['nenemy']]))
         hl.append(sum(1 for s in slots if s == T_HEALTH))
         am.append(sum(1 for s in slots if s == T_AMMO))
     want = [k + w, k + (k + 1) // 2 + w, 2 * k + w]

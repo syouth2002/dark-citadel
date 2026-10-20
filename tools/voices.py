@@ -142,8 +142,58 @@ def warden_die():
     return v
 
 
+# The bloater: wet and low; it swells with a strained rising hum and bursts.
+def bloat_hit():
+    """bloater hit: a short wet gurgle"""
+    return [fr(mix('o', 'u', i / 5), a, 36 + 2 * i, voiced=(i % 2 == 0)) for i, a in enumerate([10, 11, 10, 8, 5, 3])]
+
+
+def bloat_swell():
+    """bloater swells: a strained hum rising"""
+    return [fr(mix('u', 'o', i / 8), min(12, 5 + i), 30 - 4 * (i + 1), True, rough=True) for i in range(9)]
+
+
+def bloat_pop():
+    """bloater bursts: a loud wet pop, then a spray of hiss"""
+    v = [fr(VOW['a'], 15, 30, False), fr(VOW['o'], 15, 30, False)]
+    for a in [14, 12, 10, 8, 6, 4, 2]:
+        v.append(fr(VOW['h'] if a >= 10 else VOW['s'], a, 0, False))
+    return v
+
+
+# The lamp turret: hollow and mechanical.
+def turret_hit():
+    """turret struck: a dull clank"""
+    return [fr(VOW['o'], a, 50, True) for a in [12, 9, 6, 3]]
+
+
+def turret_shot():
+    """turret fires: a low hum swelling into a crack"""
+    v = [fr(VOW['u'], a, 40, True) for a in [5, 8, 10]]
+    v += [fr(VOW['s'], a, 0, False) for a in [13, 9, 5]]
+    return v
+
+
+def turret_die():
+    """turret collapses: a grinding crackle sinking into rubble"""
+    v = [fr(mix('o', 'u', i / 7), max(3, 12 - i), -40, True, rough=True) for i in range(8)]
+    v += [fr(VOW['h'], a, 0, False) for a in [10, 8, 6, 4, 2]]
+    return v
+
+
+# The bat: high squeaks.
+def bat_hit():
+    """bat: a high squeak (hit, and its bite)"""
+    return [fr(VOW['e'], a, 30 - 4 * (i + 1), True, rough=True) for i, a in enumerate([10, 12, 9, 5])]
+
+
+def bat_die():
+    """bat falls: a squeal rising, cut off"""
+    return [fr(VOW['e'], a, 30 - 4 * (i + 1), True, rough=True) for i, a in enumerate([10, 12, 12, 11, 9, 6, 3])]
+
+
 PRIORITY = {'husk_die': 2, 'orb_die': 2, 'brute_die': 2, 'stalk_die': 2, 'warden_hit': 2,
-            'warden_die': 3}
+            'warden_die': 3, 'bloat_pop': 2, 'turret_die': 2, 'bat_die': 2}
 
 VOICES = [
     ('husk_hit', husk_hit),
@@ -158,6 +208,14 @@ VOICES = [
     ('stalk_die', stalk_die),
     ('warden_hit', warden_hit),
     ('warden_die', warden_die),
+    ('bloat_hit', bloat_hit),
+    ('bloat_pop', bloat_pop),
+    ('bloat_swell', bloat_swell),
+    ('turret_hit', turret_hit),
+    ('turret_shot', turret_shot),
+    ('turret_die', turret_die),
+    ('bat_hit', bat_hit),
+    ('bat_die', bat_die),
 ]
 
 

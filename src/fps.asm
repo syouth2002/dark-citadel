@@ -14,7 +14,7 @@ ROWLO           equ 3D00h           ; row * 40, low bytes (page aligned)
 ROWHI           equ 3E00h           ; high bytes
 COLANG          equ 3DC8h           ; per column: angle offset (after ROWLO)
 COLCOS          equ 3EC8h           ; and cos(offset) (after ROWHI)
-EDGE            equ 3700h           ; |1/cos| * 20/256 by angle: low bytes, high at 3800h
+EDGE            equ 3B00h           ; |1/cos| * 20/256 by angle: low bytes, high at 3C00h
 STACKTOP        equ 4000h
 VY0             equ 4               ; first view row
 FRAME_TICKS     equ 20              ; 40 ms -> at most 25 fps

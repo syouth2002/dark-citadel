@@ -79,6 +79,22 @@ g.frame(0, 4)
 g.frame(H.K_SPACE, 1)
 save(g.p6, 'combat.png')
 
+# ---- the newer foes: a lamp turret lighting up, a bloater, a bat
+g = game()
+to_floor(g, 9)
+g.m[V['god']] = 1
+cells, _, _ = T.level(9)
+ox, oy = T.find_open(cells, 6, 3)
+g.put(ox + 0.5, oy + 1.5, 0)
+foes = [(12, ox + 5.3, oy + 1.5, 2), (11, ox + 2.7, oy + 0.8, 0), (13, ox + 3.6, oy + 2.3, 0)]
+for k in range(3):                          # (held where they are for the picture)
+    place(g, foes)
+    for i, hp in ((0, 10), (1, 6), (2, 1)):
+        g.m[E + i * 16 + 5] = hp
+    g.m[E + 7] = 30                         # (the turret's lens lit)
+    g.frame(0, 1)
+save(g.p6, 'foes.png')
+
 # ---- exploring: the auto map fills in as the lantern reaches the walls
 # (a walk that keeps to the corridors: turn while the way ahead is shut)
 g = game()

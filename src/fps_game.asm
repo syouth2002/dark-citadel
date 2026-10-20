@@ -30,6 +30,9 @@ T_AMMO   equ 7
 T_KEYO   equ 8
 T_KEYV   equ 9
 T_OIL    equ 10         ; lantern oil: the light reaches further for a while
+T_BLOAT  equ 11         ; from floor 5: slow; swells and bursts near the player
+T_TURRET equ 12         ; from floor 9: does not move, fires whenever it sees you
+T_BAT    equ 13         ; from floor 3: fast and erratic, fragile
 OIL_TIME equ 400        ; frames (about a minute)
 
 ; ----------------------------------------------------------------------------
@@ -312,9 +315,10 @@ sl_o:   ld a,(hl)                   ; x | (type & 7) << 5
         and 7
         or d
         ld (ix+E_T),a
-        cp T_ITEM
+        call is_foe
         jr nc,sl_it
         push hl
+        call ty_idx
         ld hl,e_hp-1            ; health by type
         add a,l
         ld l,a
@@ -624,11 +628,11 @@ ti_d1:  ld a,(v_diff)
         jr c,ti_d2
         sub 3
 ti_d2:  ld (v_diff),a
-        push bc
+        push bc                     ; (only that line: quick, no key missed)
         ld a,80h
-        call ti_page
+        call ti_diff
         ld a,0C0h
-        call ti_page
+        call ti_diff
         pop bc
 ti_w4:  ld a,b
         and I_FIRE
@@ -652,7 +656,7 @@ pw_wrong:
         ld a,10
         call set_color
         ld hl,s_pwbad
-        ld de,(8 << 8) | (VY0+62)
+        ld de,(8 << 8) | (VY0+70)
         jp draw_text
 
 ; up up down down left right left right
@@ -698,43 +702,58 @@ tp_2:   ld (hl),0
         ld hl,s_ti_nofl             ; (no floor on the title)
         ld de,(15 << 8) | L4_Y
         call draw_text
-        ld a,13
-        call set_color
-        ld hl,s_ti_name
-        ld de,(10 << 8) | (VY0+24)
-        call draw_text
+        ld a,(v_tgt_h)              ; the logo, straight onto the page
+        ld d,a
+        ld e,VY0*40
+        ld hl,logo_p0
+        push de
+        call unlz
+        pop de
+        set 5,d                     ; (plane 1)
+        ld hl,logo_p1
+        call unlz
         ld a,7
         call set_color
         ld hl,s_ti_keys
-        ld de,(4 << 8) | (VY0+42)
+        ld de,(4 << 8) | (VY0+50)
         call draw_text
         ld hl,s_ti_keys2
-        ld de,(6 << 8) | (VY0+52)
+        ld de,(6 << 8) | (VY0+60)
         call draw_text
         ld hl,s_ti_pw
-        ld de,(8 << 8) | (VY0+62)
+        ld de,(8 << 8) | (VY0+70)
         call draw_text
         ld hl,s_ti_df
-        ld de,(5 << 8) | (VY0+74)
+        ld de,(5 << 8) | (VY0+80)
         call draw_text
+        ld a,(v_tgt_h)
+        call ti_diff
+        ld de,(10 << 8) | (VY0+100)
+        jp im_sp
+
+; A = page: the difficulty's name and its best time on the title
+ti_diff:
+        ld (v_tgt_h),a
         ld a,14
         call set_color
         call diff_name
-        ld de,(18 << 8) | (VY0+74)
+        ld de,(18 << 8) | (VY0+80)
+        call draw_text
+        ld hl,s_ti_nobest
+        ld de,(9 << 8) | (VY0+90)
         call draw_text
         call best_get               ; (this difficulty's)
         ld a,h
         or l
-        jr z,tp_3
+        ret z
         push hl
         ld hl,s_best
-        ld de,(9 << 8) | (VY0+84)
+        ld de,(9 << 8) | (VY0+90)
         call draw_text
         pop hl
-        ld de,(19 << 8) | (VY0+84)
-        call draw_time
-tp_3:   ld de,(10 << 8) | (VY0+96)
-        jp im_sp
+        ld de,(19 << 8) | (VY0+90)
+        jp draw_time
+s_ti_nobest: defb "               ",0
 
 ; HL -> this difficulty's best time / HL = it (0: none yet)
 best_ptr:
@@ -776,12 +795,11 @@ tp_clr: ld d,h
         ldir
         ret
 
-s_ti_name:  defb "DARK CITADEL",0
 s_ti_nofl:  defb "              ",0
 s_ti_keys:  defb "ARROWS MOVE    SPACE FIRE",0
 s_ti_keys2: defb "SHIFT  CHANGE WEAPON",0
 s_ti_pw:    defb "P  ENTER PASSWORD",0
-s_pwl:      defb "PASSWORD ",0
+s_pwl:      defb "PASSWORD         ",0    ; (covers "P  ENTER PASSWORD")
 s_pwbad:    defb "WRONG PASSWORD   ",0
 
 im_page:
@@ -1147,6 +1165,14 @@ s_snd:   defb "SHOT      ",0
          defb "STALK DIE ",0
          defb "WARDN HIT ",0
          defb "WARDN DIE ",0
+         defb "BLOAT HIT ",0
+         defb "BLOAT POP ",0
+         defb "BLOAT SWEL",0
+         defb "TURRET HIT",0
+         defb "TURRET SHT",0
+         defb "TURRET DIE",0
+         defb "BAT SQUEAK",0
+         defb "BAT DIE   ",0
          defb "MUSIC 1   ",0
          defb "MUSIC 2   ",0
          defb "MUSIC 3   ",0
@@ -1399,10 +1425,10 @@ pe_s1:  ld (v_tgt_h),a
         ld a,14
         call set_color
         ld hl,s_pwl
-        ld de,(8 << 8) | (VY0+62)
+        ld de,(8 << 8) | (VY0+70)
         call draw_text
         ld hl,v_pwtext
-        ld de,(17 << 8) | (VY0+62)
+        ld de,(17 << 8) | (VY0+70)
         jp draw_text
 
 ; ----------------------------------------------------------------------------
@@ -1737,7 +1763,7 @@ pf_aim: ld (v_s_dep),hl         ; best depth so far (wall, or the axe's reach)
 pf_lp:  ld a,(ix+E_T)
         or a
         jr z,pf_nx
-        cp T_ITEM
+        call is_foe
         jr nc,pf_nx
         ld a,(ix+E_VIS)
         or a
@@ -1788,6 +1814,14 @@ pf_dm:  dec (iy+E_HP)
         ret
 pf_kill:
         ld a,(iy+E_T)
+        cp T_BLOAT                  ; a bloater shot down bursts where it is
+        jr nz,kill_iy
+        ld (iy+E_ST),2
+        ld (iy+E_TM),1
+        ret
+; IY = enemy: it falls (the warden: the exit opens), a kill
+kill_iy:
+        ld a,(iy+E_T)
         cp T_WARDEN
         call z,boss_down
         ld (iy+E_ST),3
@@ -1832,14 +1866,30 @@ enemy_one:
         ret
 eo_live:
         ld a,(ix+E_T)
-        cp T_ITEM
+        call is_foe
         jr nc,eo_item
         ld a,(ix+E_ST)
         or a
         jr nz,eo_lv1
         bit 2,(ix+E_VIS)         ; idle until the player can see it
-        ret z
-        ld (ix+E_ST),1
+        jr nz,eo_wk
+        ld a,(ix+E_T)            ; (a turret: until it sees the player,
+        cp T_TURRET              ; within 8 cells, in the dark too)
+        ret nz
+        ld a,(ix+E_AN)
+        and 7
+        ret nz
+        call to_player
+        ld a,h
+        cp 8
+        ret nc
+        call los
+        ret nz
+eo_wk:  ld (ix+E_ST),1
+        ld a,(ix+E_T)
+        cp T_TURRET
+        ret nz
+        ld (ix+E_TM),20          ; (the turret: its first bolt soon)
         ret
 eo_lv1: call to_player
         ld a,(ix+E_ST)
@@ -1948,7 +1998,21 @@ eo_act: cp 2
         jp z,eo_orb
         cp T_WARDEN
         jp z,eo_ward
-        ; husk, brute, stalker: walk up and strike
+        cp T_TURRET
+        jp z,eo_tur
+        cp T_BLOAT
+        jr nz,ea_1
+        push hl                     ; the bloater: within a cell, it swells
+        ld de,256
+        or a
+        sbc hl,de
+        pop hl
+        jr nc,eo_walk
+        ld (ix+E_ST),2
+        ld (ix+E_TM),12
+        ld a,VO_BLOAT_SWELL
+        jp voice_play
+ea_1:   ; husk, brute, stalker, bat: walk up and strike
         push hl
         ld de,220
         or a
@@ -1965,10 +2029,28 @@ eo_walk:
         call e_par
         ld c,(hl)                   ; speed
         ld a,(ix+E_T)
+        cp T_BAT
+        jr z,eo_bat
         cp T_STALK
         jp nz,enemy_step
-        ; the stalker runs along the main axis and darts along the other
-        ; one, switching side now and then: a zigzag that is hard to aim at
+        ld a,(ix+E_AN)              ; the stalker: sides in turn
+        and 8
+        ld b,24
+        jr zigzag
+; the bat: wider and quicker; every 8 frames it may switch side (3 in 4)
+eo_bat: ld a,(ix+E_AN)
+        and 7
+        jr nz,eb_1
+        call rand
+        cp 192
+        jr nc,eb_1
+        inc (ix+E_TM)               ; (its side: bit 0)
+eb_1:   ld a,(ix+E_TM)
+        and 1
+        ld b,36
+; C = speed, B = dart, A = side (0: +): run along the main axis towards the
+; player and dart along the other one - a zigzag that is hard to aim at
+zigzag: push af
         push bc
         ld hl,(v_e_dx)
         call abs16
@@ -1985,25 +2067,53 @@ eo_walk:
         jr eo_s2
 eo_s1:  ld (v_e_dy),hl              ; x is the main axis: run along x only
 eo_s2:  pop bc
+        push bc
         push de
         call enemy_step
         pop de
+        pop bc
+        pop af
         ld hl,0
         ld (v_e_dx),hl
         ld (v_e_dy),hl
         ld hl,1
-        bit 3,(ix+E_AN)
+        or a
         jr z,eo_s3
         ld hl,-1
 eo_s3:  ex de,hl
         ld (hl),e
         inc hl
         ld (hl),d
-        ld c,24
+        ld c,b
         jp enemy_step
+
+; the turret: fires every so often while it sees the player (the lens
+; lights up first)
+eo_tur: inc (ix+E_TM)
+        ld a,(ix+E_TM)
+        cp 28
+        ret c
+        call los
+        ret nz
+        ld (ix+E_ST),2
+        ld (ix+E_TM),8
+        ret
+
+; A = type -> C: an enemy (1-5, 11-13), NC: an item
+is_foe: cp T_ITEM
+        ret c
+        cp T_BLOAT
+        ccf
+        ret
+; A = an enemy's type -> 1..8 (the tables by kind: 11-13 follow the warden)
+ty_idx: cp T_BLOAT
+        ret c
+        sub T_BLOAT-6
+        ret
 
 ; IX = enemy -> HL = its abilities: speed, wind-up, damage
 e_par:  ld a,(ix+E_T)
+        call ty_idx
         dec a
         ld l,a
         add a,a
@@ -2017,7 +2127,11 @@ e_tbl:  defb 18,6,8                 ; husk
         defb 12,5,5                 ; orb (keeps away and shoots)
         defb 10,9,20                ; brute: slow, slow blow, hits hard
         defb 38,3,5                 ; stalker: fast, quick, light
-e_hp:   defb 3,4,8,2,30             ; shots to bring them down
+        defb 0,0,0                  ; (the warden: its own ways)
+        defb 26,0,0                 ; bloater: rolls at you (its burst: burst)
+        defb 0,0,0                  ; turret: does not move (eo_tur)
+        defb 60,2,4                 ; bat: very fast, quick, light
+e_hp:   defb 3,4,8,2,30,6,10,1      ; shots to bring them down
 
 eo_orb: ; sentinel: keep some distance, shoot now and then
         inc (ix+E_TM)
@@ -2142,14 +2256,24 @@ eo_attack:
         jp z,ew_hit
         cp T_ORB
         jr z,eo_shot
+        cp T_BLOAT
+        jp z,burst
+        cp T_TURRET
+        jr z,eo_tshot
         ld de,320               ; claw reaches ~1.25 cells
         or a
         sbc hl,de
         ret nc
         call los                ; not through walls or closed doors
         ret nz
-        call snd_claw
-        call e_par
+        ld a,(ix+E_T)
+        cp T_BAT
+        jr nz,ea_c
+        ld a,VO_BAT_HIT         ; (the bat's bite: a squeak)
+        call voice_play
+        jr ea_c2
+ea_c:   call snd_claw
+ea_c2:  call e_par
         inc hl
         inc hl
         ld a,(hl)               ; damage
@@ -2164,6 +2288,93 @@ eo_shot:
         ret nc
         ld a,5
         jp hurt_player
+eo_tshot:                       ; the turret's bolt
+        ld (ix+E_TM),0
+        call los
+        ret nz
+        ld a,VO_TUR_SHOT
+        call voice_play
+        call rand
+        cp 150
+        ret nc
+        ld a,8
+        jp hurt_player
+
+; IX = a bloater bursting (HL = distance to the player): 25 to the player
+; within 1.5 cells if in sight, 3 to the other enemies near it (bloaters
+; among them burst soon after); then it is gone
+burst:  ld de,384
+        or a
+        sbc hl,de
+        jr nc,bu_1
+        call los
+        jr nz,bu_1
+        ld a,25
+        call hurt_player
+bu_1:   ld iy,v_enemies
+        ld a,(v_nobj)
+        ld b,a
+bu_lp:  push bc
+        ld a,(iy+E_T)
+        call is_foe
+        jr nc,bu_nx
+        ld a,(iy+E_ST)
+        cp 3
+        jr nc,bu_nx
+        push iy                     ; (not itself)
+        pop hl
+        push ix
+        pop de
+        or a
+        sbc hl,de
+        jr z,bu_nx
+        ld l,(iy+E_X)               ; how far from the bloater
+        ld h,(iy+E_X+1)
+        ld e,(ix+E_X)
+        ld d,(ix+E_X+1)
+        or a
+        sbc hl,de
+        ld (v_e_dx),hl
+        ld l,(iy+E_Y)
+        ld h,(iy+E_Y+1)
+        ld e,(ix+E_Y)
+        ld d,(ix+E_Y+1)
+        or a
+        sbc hl,de
+        ld (v_e_dy),hl
+        call rough_dist
+        ld de,384
+        or a
+        sbc hl,de
+        jr nc,bu_nx
+        ld a,(iy+E_T)
+        cp T_BLOAT
+        jr nz,bu_d
+        ld (iy+E_ST),2              ; another bloater: it bursts soon
+        ld (iy+E_TM),4
+        jr bu_nx
+bu_d:   ld a,2
+        ld (v_hud_dirty),a          ; (the warden's gauge)
+        ld a,(iy+E_HP)
+        sub 3
+        jr c,bu_k
+        jr z,bu_k
+        ld (iy+E_HP),a
+        ld a,(iy+E_ST)              ; (awake now)
+        or a
+        jr nz,bu_nx
+        ld (iy+E_ST),1
+        jr bu_nx
+bu_k:   ld (iy+E_HP),0
+        call kill_iy
+bu_nx:  ld de,16
+        add iy,de
+        pop bc
+        dec b
+        jp nz,bu_lp
+        push ix                     ; and the bloater itself
+        pop iy
+        jp kill_iy
 
 ; line of sight from enemy IX to the player: Z = clear, NZ = blocked.
 ; Samples 31 points along the line (v_e_dx / v_e_dy from to_player).
@@ -3587,13 +3798,22 @@ VO_STALK_HIT equ 8
 VO_STALK_DIE equ 9
 VO_WARD_HIT  equ 10
 VO_WARD_DIE  equ 11
-NVOICE       equ 12
+VO_BLOAT_HIT equ 12
+VO_BLOAT_POP equ 13
+VO_BLOAT_SWELL equ 14
+VO_TUR_HIT   equ 15
+VO_TUR_SHOT  equ 16
+VO_TUR_DIE   equ 17
+VO_BAT_HIT   equ 18
+VO_BAT_DIE   equ 19
+NVOICE       equ 20
 
 ; IY = enemy hit / killed
 snd_hit:   ld hl,vo_hit-1
            jr vo_ty
 snd_kill:  ld hl,vo_die-1
 vo_ty:     ld a,(iy+E_T)            ; each kind has its own voice
+           call ty_idx
            add a,l
            ld l,a
            jr nc,vo_t1
@@ -3605,7 +3825,9 @@ snd_claw:  ld a,VO_HUSK_CLAW
 snd_eshot: ld a,VO_ORB_SHOT
 vo_go:     jp voice_play
 vo_hit:    defb VO_HUSK_HIT,VO_ORB_HIT,VO_BRUTE_HIT,VO_STALK_HIT,VO_WARD_HIT
+           defb VO_BLOAT_HIT,VO_TUR_HIT,VO_BAT_HIT
 vo_die:    defb VO_HUSK_DIE,VO_ORB_DIE,VO_BRUTE_DIE,VO_STALK_DIE,VO_WARD_DIE
+           defb VO_BLOAT_POP,VO_TUR_DIE,VO_BAT_DIE
 
 snd_shot:   ld a,SFX_SHOT
            jr snd_play

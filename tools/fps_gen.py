@@ -31,7 +31,8 @@ PROJ_ROWS = (NCOL * 4 / 2) / math.tan(math.radians(FOV / 2)) * 1.5
 MAPN = 24                 # floor size (cells); rows are 32 apart in RAM
 MAPS = 32
 CELL = {'.': 0, '1': 1, '2': 2, '3': 3, 'D': 4, 'O': 5, 'V': 6, 'X': 7}
-OBJ = {'h': 1, 'e': 2, 'b': 3, 's': 4, 'w': 5, '+': 6, 'a': 7, 'o': 8, 'v': 9, 'l': 10}
+OBJ = {'h': 1, 'e': 2, 'b': 3, 's': 4, 'w': 5, '+': 6, 'a': 7, 'o': 8, 'v': 9, 'l': 10,
+       'g': 11, 't': 12, 'k': 13}
 
 
 def parse_level(rows):
@@ -118,7 +119,7 @@ VARS_BASE = 0x0400
 RAM_TABLES = [('cos_tbl', 0x1400), ('sin_tbl', 0x1600), ('ddx_tbl', 0x1800), ('ddy_tbl', 0x1A00),
               ('ht_near', 0x1C00), ('ht_far', 0x1D00), ('spr_hs', 0x1D80), ('spr_top', 0x1E00)]
 TEX_RAM = 0x1E80                     # unpacked sprite textures (25 x 96 bytes)
-RAM_DATA = 0x27E0                    # the compressed low-RAM data unpacks here
+RAM_DATA = None                      # the low-RAM data: just after the sprites (main)
 
 
 def rle(cells):
@@ -505,6 +506,132 @@ def main():
                     "33122133",
                     "00000000"],
     })
+    SPR.update({
+        # bloater (from floor 5): a bulbous sac on stubby legs; swollen, it
+        # glows and cracks; burst, a splash on the floor
+        'BLOAT1': ["........",
+                   "..1111..",
+                   ".111111.",
+                   "11211211",
+                   "11111111",
+                   "11133111",
+                   "11111111",
+                   ".111111.",
+                   "..1111..",
+                   "..1111..",
+                   ".1....1.",
+                   ".0....0."],
+        'BLOAT2': ["........",
+                   "........",
+                   "..1111..",
+                   ".111111.",
+                   "11211211",
+                   "11111111",
+                   "11133111",
+                   "11111111",
+                   ".111111.",
+                   "..1111..",
+                   "..1..1..",
+                   "..0..0.."],
+        'BLOATA': ["..3333..",
+                   ".311113.",
+                   "31211213",
+                   "31111113",
+                   "31322313",
+                   "31111113",
+                   "31311313",
+                   "31111113",
+                   ".311113.",
+                   "..3333..",
+                   ".1....1.",
+                   ".0....0."],
+        'BLOATD': ["........",
+                   "........",
+                   "........",
+                   "........",
+                   "........",
+                   "........",
+                   "........",
+                   "........",
+                   "3..3...3",
+                   ".3.33.3.",
+                   "23322332",
+                   "00000000"],
+        # lamp turret (from floor 9): a stone pillar with a glowing lens
+        'TUR1':   ["..2222..",
+                   ".233332.",
+                   "..2332..",
+                   "...22...",
+                   "..1111..",
+                   "..1001..",
+                   "..1111..",
+                   "..1001..",
+                   "..1111..",
+                   ".111111.",
+                   ".111111.",
+                   "00000000"],
+        'TURA':   ["2.2222.2",
+                   ".233332.",
+                   "22333322",
+                   ".233332.",
+                   "...22...",
+                   "..1111..",
+                   "..1001..",
+                   "..1111..",
+                   "..1111..",
+                   ".111111.",
+                   ".111111.",
+                   "00000000"],
+        'TURD':   ["........",
+                   "........",
+                   "........",
+                   "........",
+                   "........",
+                   "........",
+                   "........",
+                   "........",
+                   "..2.....",
+                   ".1101...",
+                   ".111101.",
+                   "00000000"],
+        # bat (from floor 3): flies high, wings up and down; fallen, on the floor
+        'BAT1':   ["1......1",
+                   "11.11.11",
+                   ".112211.",
+                   "..1111..",
+                   "...11...",
+                   "........",
+                   "........",
+                   "........",
+                   "........",
+                   "........",
+                   "........",
+                   "........"],
+        'BAT2':   ["........",
+                   "...11...",
+                   ".112211.",
+                   "11.11.11",
+                   "1......1",
+                   "........",
+                   "........",
+                   "........",
+                   "........",
+                   "........",
+                   "........",
+                   "........"],
+        'BATD':   ["........",
+                   "........",
+                   "........",
+                   "........",
+                   "........",
+                   "........",
+                   "........",
+                   "........",
+                   "........",
+                   "........",
+                   "..1221..",
+                   ".11..11."],
+    })
     E = "........"
     SPR.update({
         'HEALTH': [E] * 6 + [".111111.", ".113311.", ".133331.", ".113311.", ".111111.", E],
@@ -523,6 +650,8 @@ def main():
     # glowing item frames are made from the plain ones (colours 1, 2 -> 3).
     # the warden's frames first: they go just below the others (TEX_RAM)
     names = [n for n in SPR if n.startswith('WARDEN')] + [n for n in SPR if not n.startswith('WARDEN')]
+    global RAM_DATA
+    RAM_DATA = TEX_RAM + len(names) * 96
     for k, name in enumerate(names):
         d.append('tex_%-10s equ 0%04Xh' % (name.lower(), TEX_RAM + k * 96))
     assert TEX_RAM + len(names) * 96 <= RAM_DATA, 'sprites run into the RAM data'
@@ -550,6 +679,9 @@ def main():
     d.append('        defw tex_warden1,tex_warden2,tex_wardena,tex_wardend')
     for nm in ('health', 'ammo', 'keyo', 'keyv', 'oil'):     # (+8000h: glowing)
         d.append('        defw tex_%s,tex_%s+8000h,tex_%s,tex_%s+8000h' % ((nm,) * 4))
+    d.append('        defw tex_bloat1,tex_bloat2,tex_bloata,tex_bloatd')  # (11)
+    d.append('        defw tex_tur1,tex_tur1,tex_tura,tex_turd')          # (12)
+    d.append('        defw tex_bat1,tex_bat2,tex_bat2,tex_batd')          # (13)
     # ---- weapon: 16 x 24 pixels at the bottom centre of the view (bytes 14..17).
     #      One barrel on the centre line; the muzzle flash is a single burst.
     #      '.' transparent, 0..3 colours of the view group.  Original design.
@@ -652,6 +784,13 @@ def main():
     d.append('MAPN         equ %d' % MAPN)
     d.append('MAPS         equ %d' % MAPS)
     d.append('NLEVEL       equ %d' % len(all_levels))
+    import fps_mapcode                     # walls as runs, objects in 2 bytes
+    # the extra enemies of NORMAL / HARD, by floor (kept in low RAM)
+    d.append('extra_tbl:                    ; per floor: count, then objects (2 bytes)')
+    d.append('        defw ' + ','.join('ext%d' % i for i in range(len(all_levels))))
+    for i in range(len(all_levels)):
+        ex = fps_levels.EXTRAS[i + 1]
+        d.append('ext%d:   defb %d' % (i, len(ex)) + ''.join(',%d' % v for v in fps_mapcode.encode_objs(ex)))
     d.append('level_tbl:                    ; map (packed), objects, count, start x, start y, plane-1 byte')
     for i, (grp, rows) in enumerate(all_levels):
         cells, objs, (sx, sy) = parse_level(rows)
@@ -678,7 +817,7 @@ def main():
                'P': (255, 255, 255), 'h': (255, 60, 60), 'e': (255, 60, 200), '+': (0, 200, 255),
                'a': (0, 150, 255), 'o': (255, 255, 0), 'v': (255, 0, 255),
                'b': (255, 140, 40), 's': (160, 255, 60), 'w': (255, 255, 255),
-               'l': (255, 200, 120)}
+               'l': (255, 200, 120), 'g': (120, 255, 120), 't': (255, 255, 160), 'k': (200, 160, 255)}
         S = MAPN + 1
         rows_n = (len(all_levels) + 6) // 7
         im = Image.new('RGB', (7 * S * 6, rows_n * S * 6), (60, 60, 60))
@@ -688,7 +827,7 @@ def main():
             for y, r in enumerate(rows):
                 for x, ch in enumerate(r):
                     c = col[ch]
-                    small = ch in 'Phebsw+aovl'
+                    small = ch in 'Phebsw+aovlgtk'
                     for dy in range(6):
                         for dx in range(6):
                             inner = 1 <= dx <= 4 and 1 <= dy <= 4
@@ -707,18 +846,21 @@ def main():
     d.append('font_data:')
     for ch in font.FONT_ORDER:
         d.append('        defb ' + ','.join('0%02Xh' % font.font_mask(r) for r in font.FONT[ch]))
-    # the extra enemies of NORMAL / HARD, by floor (in the program)
-    d.append('extra_tbl:                    ; per floor: count, then objects (2 bytes)')
-    d.append('        defw ' + ','.join('ext%d' % i for i in range(len(all_levels))))
-    for i in range(len(all_levels)):
-        ex = fps_levels.EXTRAS[i + 1]
-        d.append('ext%d:   defb %d' % (i, len(ex)) + ''.join(',%d' % v for v in fps_mapcode.encode_objs(ex)))
-    # From the weapon on, the data lives in low RAM: it is assembled apart
-    # (src/fps_ram.asm, org RAM_DATA) and stored compressed (build_fps.py).
+    # the title logo (tools/fps_logo.py): rows from VY0, one LZ stream a plane
+    import fps_logo
+    for name, plane in zip(('logo_p0', 'logo_p1'), fps_logo.planes(fps_logo.logo())):
+        z = lz.compress(plane)
+        assert lz.decompress(z) == plane
+        d.append('%s:                       ; the title logo, %d bytes -> %d' % (name, len(plane), len(z)))
+        for k in range(0, len(z), 24):
+            d.append('        defb ' + ','.join('0%02Xh' % v for v in z[k:k + 24]))
+    # The weapon pictures live in low RAM: assembled apart (src/fps_ram.asm,
+    # org RAM_DATA) with the voices and the music, and stored compressed
+    # (build_fps.py).  The floors stay in the program.
     cut = d.index(next(l for l in d if l.startswith('tex_gun:')))
-    fnt = d.index('font_map:')                   # (the font stays in the program)
-    ram = [l for l in d[cut:fnt] if ' equ ' not in l]
-    d = d[:cut] + [l for l in d[cut:fnt] if ' equ ' in l] + d[fnt:]
+    lvl = d.index(next(l for l in d if l.startswith('level_tbl:')))
+    ram = ['        org 0%04Xh' % RAM_DATA] + [l for l in d[cut:lvl] if ' equ ' not in l]
+    d = d[:cut] + [l for l in d[cut:lvl] if ' equ ' in l] + d[lvl:]
     # Used only at the start (before the screens are cleared): the table
     # seeds, the column tables and the packed sprites go after rt_end, at
     # the end of the program, where they may lie beyond 7FFFh (fps_boot.inc)

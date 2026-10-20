@@ -77,15 +77,15 @@ p6.voice.played.clear()
 press(p6, H.K_SPACE)
 p6.run_cycles(CPU // 2)
 check('sound 9 is a voice', m[V['dsnd']] == 8 and len(p6.voice.played) > 20)
-for _ in range(12):
-    press(p6, RIGHT)                                       # 21: music 2
+for _ in range(20):
+    press(p6, RIGHT)                                       # 29: music 2 (7 effects, 20 voices)
 s0 = m[V['bgm_s']] | m[V['bgm_s'] + 1] << 8
 press(p6, H.K_SPACE)
 s1 = m[V['bgm_s']] | m[V['bgm_s'] + 1] << 8
-check('sound 21 changes the music', m[V['dsnd']] == 20 and s1 != s0)
-for _ in range(21):
+check('sound 29 changes the music', m[V['dsnd']] == 28 and s1 != s0)
+for _ in range(29):
     press(p6, LEFT)
-check('sound number wraps', m[V['dsnd']] == 23)     # (24 sounds: 21 left from 20)
+check('sound number wraps', m[V['dsnd']] == 31)     # (32 sounds: 29 left from 28)
 # invincible on, start
 press(p6, DOWN)
 press(p6, RIGHT)

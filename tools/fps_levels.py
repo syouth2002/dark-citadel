@@ -14,7 +14,7 @@ ROOM_MIN = 3                 # smallest room side (cells)
 ROOMS = (7, 18)              # rooms per floor (fewest, most)
 FLOORS = 13                  # the warden waits on the last
 NOBJ = 40                    # objects a floor may hold with its extra enemies
-KIND_T = {'h': 1, 'e': 2, 'b': 3, 's': 4}
+KIND_T = {'h': 1, 'e': 2, 'b': 3, 's': 4, 'g': 11, 't': 12, 'k': 13}
 EXTRAS = {}                  # floor -> extra enemies [(type, x, y)] (make)
 _last_extras = []
 
@@ -187,11 +187,19 @@ def generate(seed, floor):
     n_eye = int(round(n_en * min(0.4, 0.2 + 0.02 * floor)))
     n_brute = 0 if floor < 4 else min(4, 1 + (floor - 4) // 2)     # from floor 4
     n_stalk = 0 if floor < 7 else min(4, 1 + (floor - 7) // 2)     # from floor 7
+    n_bat = 0 if floor < 3 else min(3, 1 + (floor - 3) // 3)       # bats from floor 3
+    n_bloat = 0 if floor < 5 else min(3, 1 + (floor - 5) // 3)     # bloaters from floor 5
+    n_tur = 0 if floor < 9 else min(2, 1 + (floor - 9) // 3)       # turrets from floor 9
     n_hp = 3 if floor < 8 else 2
     n_am = 3
-    n_husk = n_en - n_eye - n_brute - n_stalk
-    assert n_husk >= 1
-    want = (['e'] * n_eye + ['b'] * n_brute + ['s'] * n_stalk + ['h'] * n_husk +
+    # the kinds share the floor's enemies; at least two husks stay (the
+    # most numerous kind gives way first)
+    spec = {'e': n_eye, 'b': n_brute, 's': n_stalk, 'k': n_bat, 'g': n_bloat, 't': n_tur}
+    while sum(spec.values()) > n_en - 2:
+        spec[max('ebskgt', key=lambda k: spec[k])] -= 1
+    n_husk = n_en - sum(spec.values())
+    want = (['e'] * spec['e'] + ['b'] * spec['b'] + ['s'] * spec['s'] + ['k'] * spec['k'] +
+            ['g'] * spec['g'] + ['t'] * spec['t'] + ['h'] * n_husk +
             ['+'] * n_hp + ['a'] * n_am + ['l'] * (floor >= 3))     # lantern oil
     for kind in want:
         while others:

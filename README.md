@@ -1,161 +1,166 @@
 # DARK CITADEL
 
-**PC-6001mkII用 オリジナル一人称迷宮シューティング**
+**English** | [日本語](README.ja.md)
 
-An original first-person maze shooter for the NEC PC-6001mkII (Z80, 1983), written in Z80 assembly with a raycasting engine, speech-chip enemy voices and PSG music. Runs in the PC6001VW emulator or on real hardware from a cassette WAV.
+**An original first-person maze shooter for the NEC PC-6001mkII**
 
-![PC6001VWでの実際のプレイ](docs/images/walk.gif)
+![Real play in PC6001VW](docs/images/walk.gif)
 
-*PC6001VWでの実際のプレイ（録画から切り出し、実際の速さ）*
+*Real play in PC6001VW (cut from a recording, at actual speed)*
 
-ランタンの明かりだけを頼りに、闇に沈んだ城塞の13フロアを下から上へ抜けていく、一人称視点のシューティングです。
-レイキャスティング方式で壁や敵を立体的に描き、敵は音声合成LSI（μPD7752）でうめき声や断末魔を上げます。
-名前、マップ、キャラクター、配色、効果音、敵の声、曲はすべてこのプロジェクトのために新しく作ったものです。
+With only a lantern to light the way, climb the 13 floors of a citadel sunk in darkness, from the bottom to the top, in first person.
+Walls and enemies are drawn in 3D by raycasting, and the enemies groan and scream through the machine's speech synthesis chip (uPD7752).
+The name, logo, maps, characters, colours, sound effects, enemy voices and music were all made new for this project.
+
+Written in Z80 assembly. Runs in the PC6001VW emulator, or on real hardware from a cassette WAV.
 
 | | |
 |---|---|
-| ![戦闘](docs/images/combat.png) | ![探索とオートマッピング](docs/images/explore.png) |
-| 敵は5種類。上の階ほど強い敵が混ざります | 明かりは奥行き5マスまで。照らした壁が右下の地図に描かれていきます |
-| ![番人との戦い](docs/images/warden.png) | ![フロアクリア](docs/images/tally.png) |
-| 最上階では番人（ボス）が出口を守ります | フロアクリアの集計と、次のフロアのパスワード |
+| ![Combat](docs/images/combat.png) | ![Newer foes](docs/images/foes.png) |
+| Eight kinds of enemies; tougher ones join on higher floors | A bloater, a lamp turret and a bat (floor 10) |
+| ![Exploring and the auto map](docs/images/explore.png) | ![The warden](docs/images/warden.png) |
+| The light reaches 5 cells deep; the walls it touches appear on the map | On the top floor the warden (boss) guards the exit |
+| ![Floor cleared](docs/images/tally.png) | ![Ending](docs/images/ending.png) |
+| The tally for a cleared floor, and the password for the next | The ending: dawn breaks over the citadel |
 
-## 特徴
+## Features
 
-- PC-6001mkII（mode 5、160×200ドット、16色）で動く、ダブルバッファのレイキャスティング
-- 24×24マスの13フロア、鍵のかかった扉、オートマッピングの地図
-- 銃と斧の2つの武器、5種類の敵（ボス含む）、回復・弾薬・鍵・ランタンの油
-- 3段階の難易度（EASY／NORMAL／HARD）。上の難易度ほど敵が増え、受けるダメージが大きく、補給が減ります
-- 敵の声は音声合成LSI、効果音とBGM（5曲）はPSG
-- パスワードで途中のフロアから再開、隠しコマンドのデバッグモード
-- エンディング（夜明けの場面と集計画面）
+- Double-buffered raycasting on the PC-6001mkII (mode 5, 160x200 dots, 16 colours)
+- 13 floors of 24x24 cells, locked doors, an automatic map
+- Two weapons (gun and axe), eight kinds of enemies (boss included); health, ammo, keys and lantern oil to pick up
+- Three difficulty levels (EASY / NORMAL / HARD): harder levels bring more enemies, more damage and fewer supplies
+- Enemy voices on the speech chip; sound effects and five tunes on the PSG
+- Passwords to resume from a later floor; a hidden debug mode
+- A title logo and an ending (a dawn scene and a tally)
 
-## ダウンロード
+## Download
 
-[Releases](../../releases) から次のファイルをダウンロードしてください。
+Get these files from [Releases](../../releases).
 
-| ファイル | 内容 |
+| File | Contents |
 |---|---|
-| `fps.cas` | エミュレータ用のカセットイメージ（約17.1KB） |
-| `fps.wav` | 実機用の音声データ（約3分2秒、48kHz・8bit・モノラル） |
-| `vtest.cas` | 音声合成の確認用（数字キー1〜9、0、A、Bで敵の声、Pで効果音と声を同時に鳴らす） |
+| `fps.cas` | Cassette image for emulators (about 19.1 KB) |
+| `fps.wav` | Audio for real hardware (about 3 min 24 s, 48 kHz, 8-bit, mono) |
+| `vtest.cas` | Speech-chip check (keys 1-9, 0, A, B play the enemy voices; P plays an effect and a voice together) |
 
-## 遊び方（PC6001VW）
+## How to play (PC6001VW)
 
-1. 機種をPC-6001mkIIにして、LOAD-TAPEに `fps.cas` を設定する
-2. 起動画面で `5`（N60m BASIC）を選び、`How Many Pages?` には `1` を入力する
-3. `CLOAD` を実行し、`Ok` が出たら `RUN` を実行する
-4. タイトル画面で ←→ で難易度を選び、SPACEを押すと始まる
+1. Set the machine to PC-6001mkII and load `fps.cas` with LOAD-TAPE
+2. On the start-up screen choose `5` (N60m BASIC), and answer `1` to `How Many Pages?`
+3. Type `CLOAD`; when `Ok` appears, type `RUN`
+4. On the title screen choose the difficulty with left/right, then press SPACE
 
-![タイトル画面](docs/images/title.png)
+![Title screen](docs/images/title.png)
 
-### 実機で遊ぶ場合
+### On real hardware
 
-1. `fps.wav` をPCで再生し、オーディオ出力をPC-6001mkIIのCMT入力（データレコーダー端子）につなぐ
-   （またはカセットテープに録音してデータレコーダーで再生する）
-2. mode 5で起動し、`CLOAD` を実行してからWAVを再生する
-3. `Ok` が出たら `RUN` を実行する
+1. Play `fps.wav` on a PC with its audio output connected to the PC-6001mkII's CMT input (data recorder socket)
+   (or record it to a cassette tape and play that in a data recorder)
+2. Start in mode 5, type `CLOAD`, then start the WAV
+3. When `Ok` appears, type `RUN`
 
-- リモート端子のないつなぎ方では、BASIC部分のロード後もWAVが止まらずに先へ進みます。
-  WAVにはBASIC部分の後に2秒のリーダー音を入れてありますが、間に合わない場合は `Ok` の時点で再生を一時停止し、`RUN` を入力してから再生を再開してください。
-- 出力音量は大きめにしてください。
-- **WAVは実機ではまだ試していません。** 波形を読み戻して元のデータと一致することは確認済みですが、機材によっては音量や極性の調整が必要になるかもしれません。
-- 敵の声は、PC6001VWと同じ方式の音声合成の再現を元に作ったため、実機では音色が違う可能性があります。
+- Without a remote-control connection, the WAV keeps playing after the BASIC part has loaded.
+  There is a 2-second leader tone after the BASIC part; if that is not enough, pause the playback at `Ok`, type `RUN`, then resume.
+- Use a fairly high output volume.
+- **The WAV has not been tried on real hardware yet.** Reading the waveform back gives the original data exactly, but some equipment may need the volume or polarity adjusted.
+- The enemy voices were designed with a reproduction of the speech chip like PC6001VW's, so they may sound different on real hardware.
 
-## 操作
+## Controls
 
-| キー | 動作 |
+| Key | Action |
 |---|---|
-| ←→ | 旋回 |
-| ↑↓ | 前進・後退 |
-| SPACE | 射撃（弾が切れていると空撃ちの音）／斧を振る |
-| SHIFT | 武器の持ち替え（銃⇔斧） |
-| STOP | 一時停止（もう一度押すと再開） |
-| P（タイトル画面） | パスワードの入力 |
+| Left / Right | Turn |
+| Up / Down | Move forward / back |
+| SPACE | Fire (a click when out of ammo) / swing the axe |
+| SHIFT | Switch weapons (gun / axe) |
+| STOP | Pause (press again to resume) |
+| P (title screen) | Enter a password |
 
-ジョイスティックでも操作できます。
+A joystick works too.
 
-## ルール
+## Rules
 
-- 各フロアのどこかにある、光る壁（出口）に触れるとフロアクリアです。13フロア目（最上階）を抜けるとエンディングです。
-- 扉は体当たりで開きます。オレンジとバイオレットの扉は、同じ色の鍵を拾うまで開きません。鍵は必ずその扉の手前の部屋にあります。
-- 敵は上の階ほど数が増え、強い敵が混ざります。どの敵も、壁や閉じた扉の向こうからは攻撃してきません。
+- Touch the glowing wall (the exit) somewhere on each floor to clear it. Leave the 13th floor (the top) to reach the ending.
+- Doors open when you walk into them. Orange and violet doors stay shut until you have the key of the same colour; the key is always in a room before its door.
+- Higher floors have more enemies, and tougher ones among them. No enemy attacks through walls or closed doors.
 
-| 敵 | 登場 | 体力（命中数） | 特徴 |
+| Enemy | From | Health (hits) | Behaviour |
 |---|---|---|---|
-| 徘徊者 | 1階から | 3 | 歩いて近づき、爪で攻撃（8ダメージ） |
-| 浮遊体 | 1階から | 4 | 距離を取り、光の弾を撃つ（5ダメージ） |
-| 重装兵 | 4階から | 8 | 遅いが硬い。ゆっくり振りかぶって強打（20ダメージ） |
-| 影走り | 7階から | 2 | とても速く、左右にジグザグに動いて狙いにくい。素早い爪（5ダメージ） |
-| 番人（ボス） | 13階のみ | 30 | 出口の部屋を守る。他の敵の1.5倍の大きさ。近くでは強打（15ダメージ）、離れると光弾（10ダメージ） |
+| Wanderer | Floor 1 | 3 | Walks up and claws (8 damage) |
+| Sentinel | Floor 1 | 4 | Keeps its distance and fires bolts of light (5 damage) |
+| Bat | Floor 3 | 1 | Faster than a stalker; flies in wide swings from side to side, changing sides at unpredictable moments. Bites (4 damage) |
+| Brute | Floor 4 | 8 | Slow but tough; winds up and strikes hard (20 damage) |
+| Bloater | Floor 5 | 6 | Once it notices you, it rolls at you quickly; within a cell it swells and soon bursts: 25 damage within 1.5 cells, if you are in its sight. Shot down, it bursts where it is. The burst hurts other enemies too (3 damage), and bloaters nearby burst in turn |
+| Stalker | Floor 7 | 2 | Very fast, zigzags from side to side, hard to aim at. Quick claws (5 damage) |
+| Lamp turret | Floor 9 | 10 | Does not move. Notices you whenever it can see you within 8 cells, even from the darkness beyond your lantern, and starts firing at once; then a bolt about every 1.5 s (8 damage) |
+| Warden (boss) | Floor 13 only | 30 | Guards the exit room; half as big again as the others. Strikes up close (15 damage), throws bolts from afar (10 damage) |
 
-- 13階の出口は、番人を倒すまで開きません。番人が動き出すと、メッセージ行に体力ゲージ（灰色の枠の中の赤い棒）が出ます。
-  13階には専用の曲があり、番人の攻撃が届く範囲（番人から見通せる位置）にいる間だけボス戦の曲に変わります。
-- 武器は2つです。今持っている武器は、2行目のWEAPON（GUN／AXE）に出ます。
-  - 銃（GUN）：弾を1発使い、遠くの敵にも届きます（1ダメージ）。
-  - 斧（AXE）：弾を使いません。届くのは約1.2マス先までですが、1振りで2ダメージ。
-  - 最後の1発を撃つと自動で斧に持ち替えます。
-- 拾える物：回復（体力が満タンのときは拾いません）、弾薬（1個で12発、最大99発）、鍵、ランタンの油（3階から各フロアに1つ。約1分間、明かりが7マス先まで届きます。その間、2行目にOILと出ます）。
-- ランタン：明かりは奥行き5マスまでしか届かず、その先は闇です。闇の中の敵は見えず、撃つこともできません。
-- 地図（右下）：ランタンの明かりが届いた壁と扉だけが描かれていきます。北が上で、自分（白い点）が常に中央にあり、地図の方が動きます。
-- 体力が0になると、「CONTINUE」（そのフロアの最初から、体力満タンでやり直し）か「TITLE」を選べます。
-  CONTINUEでは、弾薬が難易度ごとの数（下の「難易度」の表）に満たなければ、そこまで補充されます。
-- 画面の表示（視界の下）：
-  - 1行目：HEALTH（体力）、AMMO（弾数）、KILLS（撃破数／そのフロアの敵の数）
-  - 2行目：WEAPON（今の武器）、KEY（持っている鍵）
-  - 3行目：メッセージ（アイテム取得、鍵が必要な扉、番人の体力ゲージなど）
-  - 4行目：DARK CITADEL、FLOOR（今いるフロア）
-  - 5行目：操作の案内
-  - 被弾すると体力の数字が赤くなり、攻撃してきた方向の画面の端が光ります。弾や斧が当たった敵は一瞬光ります。
-- 記録：フロアクリア時に撃破数、アイテム数、クリアタイムを、エンディングでは合計時間、合計撃破数、やられた回数、ベストタイム（難易度ごと）を表示します。
+- The exit on floor 13 stays shut until the warden falls. Once the warden stirs, its health gauge (a red bar in a grey frame) appears on the message line.
+  Floor 13 has its own tune, which changes to the battle tune only while you are within the warden's reach (anywhere it can see you).
+- There are two weapons; the one in hand is shown as WEAPON (GUN / AXE) on the second line.
+  - Gun: uses a round, reaches far (1 damage).
+  - Axe: uses no rounds and reaches only about 1.2 cells, but deals 2 damage a swing.
+  - Firing the last round switches to the axe.
+- Pickups: health (not picked up at full health), ammo (12 rounds each, up to 99), keys, lantern oil (one on each floor from floor 3: for about a minute the light reaches 7 cells, and OIL shows on the second line).
+- The lantern: its light reaches only 5 cells deep; beyond is darkness. Enemies in the dark can't be seen or shot.
+- The map (bottom right): only walls and doors your lantern has lit are drawn. North is up, you (the white dot) stay in the middle, and the map moves.
+- When your health reaches 0, choose CONTINUE (restart the floor at full health) or TITLE.
+  On CONTINUE, your rounds are made up to the difficulty's amount (see the Difficulty table) if you have fewer.
+- The lines under the view:
+  - 1st: HEALTH, AMMO, KILLS (defeated / enemies on the floor)
+  - 2nd: WEAPON, KEY (keys held)
+  - 3rd: messages (pickups, doors that need a key, the warden's gauge and so on)
+  - 4th: DARK CITADEL, FLOOR, the difficulty
+  - 5th: a reminder of the controls
+  - When hurt, the health figure turns red and the edge of the view on the side of the attack lights up. An enemy hit by a round or the axe flashes for a moment.
+- Records: on clearing a floor, its kills, items and time; at the ending, the total time, total kills, deaths and the best time (for each difficulty).
 
-## 難易度
+## Difficulty
 
-タイトル画面で ←→ を押して選びます（EASY → NORMAL → HARD → EASY と一巡します。電源を入れたときは NORMAL）。選んだ難易度は、ゲーム中のフロア番号の右に赤字で表示されます。
+Choose with left/right on the title screen (EASY → NORMAL → HARD → EASY; NORMAL at power-on). The chosen difficulty is shown in red after the floor number during play.
 
 | | EASY | NORMAL | HARD |
 |---|---|---|---|
-| 敵の数 | 各階の基本の数 | 1.5倍 | 2倍（番人は1体のまま） |
-| 受けるダメージ | そのまま | 1.5倍 | 2倍 |
-| 開始時の弾薬 | 50 | 30 | 0（斧で始まる） |
-| 回復アイテム | そのまま | 半分 | 半分 |
-| 弾薬アイテム | そのまま | 半分 | 半分（1個6発） |
-| CONTINUE時の弾薬の補充 | 30＋3×（階数−1）発まで | 20＋2×（階数−1）発まで | なし |
+| Enemies | each floor's base number | 1.5x | 2x (still one warden) |
+| Damage taken | as is | 1.5x | 2x |
+| Rounds at the start | 50 | 30 | 0 (start with the axe) |
+| Health items | all | half | half |
+| Ammo items | all | half | half (6 rounds each) |
+| Rounds made up on CONTINUE | up to 30 + 3 x (floor - 1) | up to 20 + 2 x (floor - 1) | none |
 
-- 増える敵は、その階の敵と同じ種類の組み合わせで、スタートの部屋の外に置かれます（配置はビルド時に決まり、毎回同じです）。
-- 回復アイテムと弾薬アイテムの「半分」は、1つおきに置かれない形です。
-- ベストタイムは難易度ごとに記録し、タイトル画面には選んでいる難易度のものを表示します。
-- 難易度はパスワードにも含まれます。
+- The extra enemies come in the same mix of kinds as the floor's own, placed outside the start room (placed at build time: always the same).
+- "Half" the items means every second one is left out.
+- A best time is kept for each difficulty; the title screen shows the chosen difficulty's.
+- Passwords carry the difficulty too.
 
-## パスワード
+## Passwords
 
-- フロアをクリアすると、集計画面に次のフロアのパスワード（5文字）が出ます。体力、弾数、難易度も含まれます。
-- タイトル画面で `P` を押し、5文字を入力すると、そのフロアから始められます。
-- パスワードで始めたゲームの記録は、ベストタイムに残しません。
+- When you clear a floor, the tally shows a password (5 characters) for the next floor. It carries your health, rounds and difficulty.
+- On the title screen, press `P` and type the 5 characters to start from that floor.
+- Games started from a password don't set best times.
 
-## エンディング
+## Ending
 
-13階の番人を倒して出口を抜けると、城塞に夜明けが訪れる場面と短い文章のあと、集計画面になります。演出の途中でSPACEを押すと飛ばせます。
+Defeat the warden on floor 13 and leave by the exit: dawn breaks over the citadel, a few words follow, and then the tally. Press SPACE to skip through.
 
-![エンディング](docs/images/ending.png)
+## Debug mode (for testing)
 
-## デバッグモード（テスト用）
+On the title screen, enter Up Up Down Down Left Right Left Right to open the debug menu. Choose an item with up/down and change it with left/right.
 
-タイトル画面で ↑ ↑ ↓ ↓ ← → ← → と入力すると、デバッグメニューが開きます。上下で項目を選び、左右で値を変えます。
-
-| 項目 | 内容 |
+| Item | Contents |
 |---|---|
-| FLOOR | 開始フロア（1〜13） |
-| SOUND | サウンドテスト。1〜7：効果音、8〜19：敵の声、20〜24：BGM。SPACEで鳴らす |
-| INVINCIBLE | 無敵（被弾の音と赤い表示は出ますが、体力は減りません） |
-| START | 選んだフロアから、弾薬99で開始 |
-| EXIT | タイトル画面に戻る |
+| FLOOR | Starting floor (1-13) |
+| SOUND | Sound test: 1-7 effects, 8-27 enemy voices, 28-32 tunes. SPACE plays |
+| INVINCIBLE | Invincible (the hurt sound and red figure still show, but health doesn't drop) |
+| START | Start from the chosen floor with 99 rounds |
+| EXIT | Back to the title |
 
-デバッグモードで遊んだ記録は、ベストタイムに残しません。
+Games played in debug mode don't set best times.
 
-## ビルド
+## Building
 
-必要なもの：Python 3、[ZX Basic](https://github.com/boriel-basic/zxbasic) のアセンブラ `zxbasm`（`pip install zxbasic`）、Pillow（`pip install pillow`）。
-テストには Z80 エミュレータのパッケージ（`pip install z80`）も使います。
+You need Python 3, the assembler `zxbasm` from [ZX Basic](https://github.com/boriel-basic/zxbasic) (`pip install zxbasic`), and Pillow (`pip install pillow`).
+The tests also use the Z80 emulator package (`pip install z80`).
 
 ```bash
 python tools/fps_gen.py
@@ -163,66 +168,69 @@ python tools/build_fps.py
 python tools/cas2wav.py fps.cas fps.wav
 ```
 
-- `fps_gen.py`：表、絵、マップ、変数配置を生成します（`src/fps_*.inc`、フロアの見取り図 `build/floors_preview.png`）。
-- `build_fps.py`：低位RAMに置くデータ（`src/fps_ram.asm`）を組み立てて圧縮し、本体と合わせて `fps.cas` と `vtest.cas` を作ります。
-- `cas2wav.py`：`.cas` を実機用の `.wav` に変換します。
+- `fps_gen.py`: generates the tables, pictures, logo, maps and variable layout (`src/fps_*.inc`, and an overview of the floors in `build/floors_preview.png`).
+- `build_fps.py`: assembles and compresses the data kept in low RAM (`src/fps_ram.asm`), and makes `fps.cas` and `vtest.cas` with the program.
+- `cas2wav.py`: turns a `.cas` into a `.wav` for real hardware.
 
-## テスト
+## Tests
 
-`tools/harness.py` は、Z80とPC-6001mkIIの必要な部分（mode 5の画面、タイマーとキーの割り込み、PSG、音声合成LSI）を模した、画面なしの実行環境です。
-テストはゲームをこの上で実際に動かし、メモリと画面を調べます（`python tools/<名前>.py`、ビルドの後に実行）。
+`tools/harness.py` is a headless model of the Z80 and the parts of the PC-6001mkII the game uses (the mode 5 screen, the timer and key interrupts, the PSG, the speech chip).
+The tests run the game on it and check its memory and screen (`python tools/<name>.py`, after building).
 
-| テスト | 内容 |
+| Test | Checks |
 |---|---|
-| `fps_mech_test` | 扉、鍵、アイテム、出口、全フロアの遷移、時間の記録 |
-| `fps_map_test` | 地図とオートマッピング |
-| `fps_ray_test` | 全列の視線の結果を正確な計算と照合 |
-| `fps_los_test` | 壁や扉越しに攻撃されないこと |
-| `fps_enemy_test` | 敵の種類ごとの登場階、体力、攻撃力、速さ、動き、声 |
-| `fps_boss_test` | 番人の配置、出口の封鎖、目覚め、攻撃、体力表示、曲の切り替え、撃破 |
-| `fps_axe_test` | 斧（持ち替え、届く距離、ダメージ、弾切れ時の自動持ち替え） |
-| `fps_items_test` | ランタンの油、命中時の点滅、攻撃方向の表示、一時停止 |
-| `fps_death_test` | やられたときのCONTINUE／TITLEの選択と弾薬の補充 |
-| `fps_password_test` | パスワードの表示・入力・誤り（難易度を含む） |
-| `fps_diff_test` | 難易度の選択、敵の数、受けるダメージ、開始時とCONTINUE時の弾薬、回復・弾薬アイテム、難易度ごとのベストタイム |
-| `fps_ending_test` | エンディング |
-| `fps_debug_test` | 隠しコマンド、フロア選択、サウンドテスト、無敵、EXIT |
-| `fps_sfx_test` / `fps_voice_test` | 効果音のチャンネルと遅延、BGM、音声合成への送信 |
-| `fps_tables_test` | 起動時に作る表 |
-| `fps_still_test` | 立ち止まっている間の部分的な描き直しが、全部描き直したときと1バイトも違わないこと |
-| `fps_ab_test` | 2つのビルドで同じ操作をして、画面がフレームごとに同じか比べる（最適化の確認） |
-| `fps_test` / `fps_prof` | 速度の計測と、処理時間の内訳 |
-| `fps_shots` | このREADMEのスクリーンショット（`docs/images`、アニメーションGIFを除く）を作る |
+| `fps_mech_test` | Doors, keys, items, exits, every floor in turn, timing |
+| `fps_map_test` | The map and automapping |
+| `fps_ray_test` | Every column's ray against an exact calculation |
+| `fps_los_test` | No attacks through walls or doors |
+| `fps_enemy_test` | Each kind's first floor, health, damage, speed, movement, voices |
+| `fps_foes_test` | Bat, bloater, lamp turret (first floors, swelling and bursting, bursting when shot, hurting others and chain bursts, fire from the dark, the bat's speed and swing) |
+| `fps_boss_test` | The warden: placement, the barred exit, waking, attacks, gauge, music switching, defeat |
+| `fps_axe_test` | The axe: switching, reach, damage, automatic switch when out of ammo |
+| `fps_items_test` | Lantern oil, hit flash, the hurt-direction marker, pause |
+| `fps_death_test` | CONTINUE / TITLE when slain, rounds made up |
+| `fps_password_test` | Passwords shown, typed, mistyped (with the difficulty) |
+| `fps_diff_test` | Choosing the difficulty; enemies, damage, rounds at start and on CONTINUE, items, best times by difficulty |
+| `fps_ending_test` | The ending |
+| `fps_debug_test` | Hidden command, floor select, sound test, invincibility, EXIT |
+| `fps_sfx_test` / `fps_voice_test` | Effect channels and latency, music, data sent to the speech chip |
+| `fps_tables_test` | Tables made at start-up |
+| `fps_still_test` | Partial redraws while standing still match full redraws byte for byte |
+| `fps_ab_test` | Two builds played the same way give the same screens frame by frame (for optimisations) |
+| `fps_test` / `fps_prof` | Speed, and where the time goes |
+| `fps_shots` | Makes this README's screenshots (`docs/images`, except the animated GIF) |
 
-## 技術メモ
+## Technical notes
 
-- 画面：mode 5（160×200ドット、16色）、8000h／C000hのダブルバッファ。視界は32列×4ドット×112行です。
-  視界はプレーン1をフロアごとに一定にしてプレーン0だけを描き、天井と床は前回の壁の上端・下端との差分だけを塗り直します。
-- ローダー：BASICが小さなマシン語を書き込み、BASIC ROMのテープルーチンで本体を4000hに読み込みます。読み込み後はROMの位置をRAMに切り替えて起動します。
-- 割り込み：IM2。2msのタイマー割り込みでフレームの間隔を測り、効果音とBGMを進め、音声合成LSIにデータを送ります。描画は最大25フレーム/秒です。
-- レイキャスティング：DDAをレジスタで回し、掛け算は4分の1平方の表、壁の高さは表引きで、割り算を使いません。視線は奥行き5マスで打ち切ります。
-- フロア：24×24マス。ビルド時に `tools/fps_levels.py` が部屋を分割して作り（1フロア7〜18部屋、部屋は木の形に扉でつながる）、固定の乱数の種で毎回同じ配置になります。
-- 敵の声：音声合成LSIの外部パラメータ方式で、10msごとの7バイトのフレームを送ります。声のデータは `tools/voices.py` で作り、`tools/d7752sim.py` で試聴できます。
-- BGM：`tools/music.py`。16msごとに音符と音量の変化を進めます。
-- 容量の節約：
-  - 起動時にだけ使うデータ（低位RAMに置くデータと絵の圧縮データ、表の元になる値）はプログラムの最後に置き、8000h以降（ローダーのBASICの領域）にはみ出してもよいようにしています。展開してから画面を消去するので、ゲーム中に使う部分が4000h〜7FFFhに収まっていれば足ります。
-  - 三角関数の表は1/4周期分だけを持ち、壁の高さの表などは起動時に作ります。
-  - キャラクターの絵は4ビット単位に詰めてLZ圧縮し、起動時に展開します。
-  - マップは「壁の線分」と「鍵の扉・出口のマス」として持ちます（`tools/fps_mapcode.py`。13フロアで約1.4KB）。
-  - 武器の絵、フロア、敵の声、BGMは低位RAMに置く形で別に組み立ててLZ圧縮し（`tools/lz.py`）、起動時に展開します。
-- 高速化（工夫の前より1フレームの処理が約半分）：
-  - 立ち止まっている間は視界を計算し直さず、敵や武器が重なった列だけを描き直します。
-  - 列ごと・画面ごとに前回の壁の色合いを覚えておき、同じなら壁が伸びた分の行だけを描きます。
-  - 掛け算は上位バイトが小さいときは足し算で済ませ、よく通る場所では呼び出しをせずにその場に展開しています。
-  - 壁の継ぎ目の判定は、視線の途中の値と角度ごとの基準値の表を比べて、掛け算なしで決めます。
-  - 明かりの外や背後の敵は、奥行きだけを求めて残りの計算を省きます。
-  - 地図の描き直しは、2マス分の色から画面のバイトを直接引く表で行います。
-- ソース：
-  - `src/fps.asm`：描画エンジン、入力、音声合成
-  - `src/fps_game.asm`：敵、射撃、扉、アイテム、フロア、地図、画面、効果音、BGM
-  - `src/fps_ram.asm`：低位RAMに置くデータ（生成されたものを取り込む）
-  - `src/vtest.asm`：音声合成の確認用ビルド
+- Screen: mode 5 (160x200 dots, 16 colours), double-buffered at 8000h / C000h. The view is 32 columns x 4 dots x 112 rows.
+  Plane 1 of the view is constant for a floor, so only plane 0 is drawn; ceiling and floor are repainted only where the wall's top and bottom moved.
+- Loader: a BASIC program pokes a small machine-code stub that loads the game at 4000h with the BASIC ROM's tape routines, then maps RAM over the ROM and starts it.
+- Interrupts: IM2. A 2 ms timer interrupt paces the frames, steps the sound effects and music, and feeds the speech chip. At most 25 frames a second.
+- Raycasting: the DDA runs in registers; multiplication uses quarter-square tables and wall heights come from tables - no division. Rays stop at a depth of 5 cells.
+- Floors: 24x24 cells, made at build time by `tools/fps_levels.py` by splitting into rooms (7-18 rooms a floor, joined by doors as a tree), with fixed random seeds so every build is the same.
+- Enemy voices: the speech chip's external parameter mode, a 7-byte frame every 10 ms. The voices are made in `tools/voices.py` and can be previewed with `tools/d7752sim.py`.
+- Music: `tools/music.py`. Notes and volume steps advance every 16 ms.
+- Title logo: the citadel's towers in silhouette against the night sky, with the name in front. Drawn dot by dot in `tools/fps_logo.py`, compressed with LZ one plane at a time into the program (about 1.1 KB), and unpacked straight onto the screen each time the title is drawn.
+- Saving space:
+  - Data used only at start-up (the low-RAM data, the packed pictures, seeds for tables) sits at the end of the program and may run past 7FFFh (over the loader's BASIC area). It is unpacked before the screens are cleared, so only what is used during play has to fit in 4000h-7FFFh.
+  - The trigonometric tables are kept for a quarter turn; wall-height and other tables are made at start-up.
+  - Character pictures are packed 4 bits a dot, LZ-compressed and unpacked at start-up.
+  - Maps are kept as wall runs plus locked-door and exit cells (`tools/fps_mapcode.py`; about 1.4 KB for 13 floors). They can be read as they are, so they stay in the program.
+  - Weapon pictures, the extra enemies of the harder difficulties, the voices and the music are assembled apart for low RAM, LZ-compressed (`tools/lz.py`) and unpacked at start-up.
+- Speed (about half the time a frame took before these):
+  - While standing still, the view isn't worked out again; only columns that enemies or the weapon were drawn over are redrawn.
+  - Each column remembers the shade of its wall on each page; if it is the same, only the rows the wall grew by are drawn.
+  - Multiplications by small high bytes become additions, and the busiest ones are written out in place.
+  - Wall seams are decided by comparing values from the ray against a table by angle, with no multiplication.
+  - Enemies behind you or beyond the light get only their depth worked out.
+  - The map is redrawn using tables that give the screen bytes for two cells' colours directly.
+- Sources:
+  - `src/fps.asm`: the drawing engine, input, the speech chip
+  - `src/fps_game.asm`: enemies, firing, doors, items, floors, the map, the screens, sound effects, music
+  - `src/fps_ram.asm`: the low-RAM data (takes in the generated files)
+  - `src/vtest.asm`: the speech-chip check build
+  - `tools/fps_logo.py`: the title logo (`python tools/fps_logo.py` writes `build/logo.png` to look at)
 
-## ライセンス
+## License
 
 [MIT License](LICENSE)

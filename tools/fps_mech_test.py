@@ -76,7 +76,7 @@ check('after the ending: back to the title', m[V['level']] == LAST)
 check('best time recorded', g.getw('best') == g.getw('gsecs') > 0 and m[V['record']] == 1)
 H.fps_start(g.p6)
 check('then a new game on floor 1', m[V['level']] == 0 and m[V['hp']] == 100)
-ram_end = T.fps_gen.RAM_DATA + len(open(os.path.join(T.ROOT, 'build', 'fps_ram.bin'), 'rb').read())
+ram_end = T.RAM_DATA + len(open(os.path.join(T.ROOT, 'build', 'fps_ram.bin'), 'rb').read())
 check('the stack stays clear of the low-RAM data',
       g.p6.min_sp > ram_end + 16)
 print('lowest stack %04X, RAM data ends %04X' % (g.p6.min_sp, ram_end))

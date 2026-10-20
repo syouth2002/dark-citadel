@@ -64,7 +64,8 @@ nib = [255 if v == 15 else v for v in nib]
 check('every sprite stored (%d of %d)' % (len(nib) // 96, EQ['NTEX_PACKED']), len(nib) == EQ['NTEX_PACKED'] * 96)
 check('sprite textures', list(m[EQ['TEX_RAM']:EQ['TEX_RAM'] + len(nib)]) == nib)
 ram = open(os.path.join(ROOT, 'build', 'fps_ram.bin'), 'rb').read()
-RAM_DATA = fps_gen.RAM_DATA
+RAM_DATA = next(int(l.split()[2].rstrip('h'), 16) for l in open(os.path.join(ROOT, 'src', 'fps_blob.inc'))
+                if l.startswith('RAM_DATA '))
 check('low-RAM data (weapons, floors, voices, music) unpacked intact',
       bytes(m[RAM_DATA:RAM_DATA + len(ram)]) == ram)
 import fps_levels

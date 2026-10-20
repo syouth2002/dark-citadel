@@ -17,6 +17,9 @@ for _l in open(os.path.join(ROOT, 'src', 'fps_vars.inc')):
         V[_n[2:]] = int(_v.rstrip('h'), 16)
     elif _l.startswith('NEN '):
         NEN = int(_l.split()[2])        # object slots
+for _l in open(os.path.join(ROOT, 'src', 'fps_blob.inc')):
+    if _l.startswith('RAM_DATA '):
+        RAM_DATA = int(_l.split()[2].rstrip('h'), 16)   # where the low-RAM data unpacks
 LEVELS = fps_levels.all_levels()
 
 
