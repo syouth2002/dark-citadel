@@ -30,7 +30,7 @@ Written in Z80 assembly. Runs in the PC6001VW emulator, or on real hardware from
 - Two weapons (gun and axe), eight kinds of enemies (boss included); health, ammo, keys and lantern oil to pick up
 - Three difficulty levels (EASY / NORMAL / HARD): harder levels bring more enemies, more damage and fewer supplies
 - Enemy voices on the speech chip; sound effects and five tunes on the PSG
-- Passwords to resume from a later floor; a hidden debug mode
+- Passwords to resume from a later floor (records carried over); a hidden debug mode
 - A title logo and an ending (a dawn scene and a tally)
 
 ## Download
@@ -39,8 +39,8 @@ Get these files from [Releases](../../releases).
 
 | File | Contents |
 |---|---|
-| `fps.cas` | Cassette image for emulators (about 19.1 KB) |
-| `fps.wav` | Audio for real hardware (about 3 min 24 s, 48 kHz, 8-bit, mono) |
+| `fps.cas` | Cassette image for emulators (about 19.4 KB) |
+| `fps.wav` | Audio for real hardware (about 3 min 26 s, 48 kHz, 8-bit, mono) |
 | `vtest.cas` | Speech-chip check (keys 1-9, 0, A, B play the enemy voices; P plays an effect and a voice together) |
 
 ## How to play (PC6001VW)
@@ -135,9 +135,9 @@ Choose with left/right on the title screen (EASY → NORMAL → HARD → EASY; N
 
 ## Passwords
 
-- When you clear a floor, the tally shows a password (5 characters) for the next floor. It carries your health, rounds and difficulty.
-- On the title screen, press `P` and type the 5 characters to start from that floor.
-- Games started from a password don't set best times.
+- When you clear a floor, the tally shows a password (11 characters) for the next floor. It carries your health, rounds and difficulty, and your records so far (total time, total kills, deaths).
+- On the title screen, press `P` and type the 11 characters to start from that floor. The records go on from there, so the ending shows the records of the whole game even if you resumed partway.
+- A game resumed from a password can set a best time too (debug-mode games can't).
 
 ## Ending
 
@@ -189,7 +189,7 @@ The tests run the game on it and check its memory and screen (`python tools/<nam
 | `fps_axe_test` | The axe: switching, reach, damage, automatic switch when out of ammo |
 | `fps_items_test` | Lantern oil, hit flash, the hurt-direction marker, pause |
 | `fps_death_test` | CONTINUE / TITLE when slain, rounds made up |
-| `fps_password_test` | Passwords shown, typed, mistyped (with the difficulty) |
+| `fps_password_test` | Passwords shown, typed, mistyped (with the difficulty and the records carried over) |
 | `fps_diff_test` | Choosing the difficulty; enemies, damage, rounds at start and on CONTINUE, items, best times by difficulty |
 | `fps_ending_test` | The ending |
 | `fps_debug_test` | Hidden command, floor select, sound test, invincibility, EXIT |

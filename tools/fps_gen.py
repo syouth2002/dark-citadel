@@ -106,11 +106,12 @@ VARS = [
     ('mm_ox', 1), ('mm_oy', 1), ('mm_x', 1), ('mm_wy', 1),
     ('newn', 1), ('newq', 64),
     ('timing', 1), ('tsub', 1), ('thalf', 1), ('fsecs', 2), ('gsecs', 2), ('best', 6),
-    ('deaths', 1), ('tkills', 1), ('record', 1),
+    ('deaths', 1), ('tkills', 2), ('record', 1),
     ('debug', 1), ('god', 1), ('startlv', 1), ('cheat', 1), ('dsel', 1), ('dfloor', 1),
     ('dsnd', 1), ('dchoice', 1), ('boss', 1), ('bossix', 2), ('bmus', 1), ('bmus_t', 1), ('firelock', 1), ('weapon', 1),
     ('smap', 2), ('flashix', 2), ('flasht', 1), ('oil', 2), ('paused', 1), ('hdir', 1), ('hdirt', 1),
-    ('pw', 1), ('pwhp', 1), ('pwammo', 1), ('pwtext', 6), ('diff', 1), ('hcnt', 1), ('acnt', 1), ('xdone', 1), ('nobj', 1), ('pwn', 1), ('eskip', 1), ('wimg0', 2), ('wimg1', 2),
+    ('pw', 1), ('pwhp', 1), ('pwammo', 1), ('pwtext', 12), ('pwbits', 7), ('pwpos', 1), ('pwsecs', 2), ('pwkills', 2),
+    ('pwdeaths', 1), ('pwdiff', 1), ('diff', 1), ('hcnt', 1), ('acnt', 1), ('xdone', 1), ('nobj', 1), ('pwn', 1), ('eskip', 1), ('wimg0', 2), ('wimg1', 2),
     ('bgm_p', 2), ('bgm_s', 2), ('bgm_t', 1), ('bgm_v', 1),
 ]
 VARS_BASE = 0x0400

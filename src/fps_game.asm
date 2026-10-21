@@ -54,17 +54,23 @@ new_game:
 ng_1:   ld (v_ammo),a
         ld hl,0
         ld (v_gsecs),hl
+        ld (v_tkills),hl
         xor a
         ld (v_deaths),a
-        ld (v_tkills),a
         ld (v_hurt),a
-        ld a,(v_pw)                 ; from a password: its health, its rounds
-        or a
+        ld a,(v_pw)                 ; from a password: its health, its rounds,
+        or a                        ; the records so far
         jr z,ng_2
         ld a,(v_pwhp)
         ld (v_hp),a
         ld a,(v_pwammo)
         ld (v_ammo),a
+        ld hl,(v_pwsecs)
+        ld (v_gsecs),hl
+        ld hl,(v_pwkills)
+        ld (v_tkills),hl
+        ld a,(v_pwdeaths)
+        ld (v_deaths),a
 ng_2:   ld a,(v_startlv)            ; 0, or the floor chosen (debug, password)
         ld (v_level),a
         jp start_level
@@ -507,12 +513,14 @@ intermission:
         ld (v_timing),a
         ld (v_record),a
         ld a,(v_kills)              ; totals
-        ld hl,v_tkills
-        add a,(hl)
-        ld (hl),a
-        ld a,(v_debug)              ; (not from a debug or a password game)
-        ld hl,v_pw
-        or (hl)
+        ld hl,(v_tkills)
+        add a,l
+        ld l,a
+        jr nc,in_k
+        inc h
+in_k:   ld (v_tkills),hl
+        ld a,(v_debug)              ; (not from a debug game)
+        or a
         jr nz,in_1
         ld a,(v_level)              ; the last floor: a new best time?
         inc a
@@ -800,7 +808,7 @@ s_ti_keys:  defb "ARROWS MOVE    SPACE FIRE",0
 s_ti_keys2: defb "SHIFT  CHANGE WEAPON",0
 s_ti_pw:    defb "P  ENTER PASSWORD",0
 s_pwl:      defb "PASSWORD         ",0    ; (covers "P  ENTER PASSWORD")
-s_pwbad:    defb "WRONG PASSWORD   ",0
+s_pwbad:    defb "WRONG PASSWORD      ",0
 
 im_page:
         call im_clear
@@ -899,9 +907,9 @@ im_fin: ld a,13
         ld hl,(v_gsecs)
         ld de,(19 << 8) | (VY0+28)
         call draw_time
-        ld a,(v_tkills)
+        ld hl,(v_tkills)
         ld de,(19 << 8) | (VY0+38)
-        call draw_num3
+        call draw_num3w
         ld a,(v_deaths)
         ld de,(19 << 8) | (VY0+48)
         call draw_num3
@@ -1188,179 +1196,241 @@ pw_entry:
         ret
 #else
 ; ----------------------------------------------------------------------------
-;  passwords: 5 characters for the next floor, health, rounds, difficulty.
-;  24 bits: checksum (6) | difficulty (2) | floor (4) | rounds (7) |
-;  health / 4 (5), scrambled, 5 bits a character from the low end
+;  passwords: 11 characters for the next floor and the records so far.
+;  55 bits from the low end: health / 4 (5), rounds (7), floor (4),
+;  difficulty (2), time in seconds (14), kills (9), deaths (8), checksum (6);
+;  scrambled (pw_key), 5 bits a character.
 ; ----------------------------------------------------------------------------
-PW_K0   equ 0A3h
-PW_K1   equ 0C5h
-PW_K2   equ 09h
 pw_make:
-        ld a,(v_level)
-        inc a
-        ld d,a                      ; the next floor (1..NLEVEL-1)
+        call pw_clr
         ld a,(v_hp)
         add a,3
         srl a
-        srl a
-        ld e,a                      ; health / 4, rounded up (1..25)
-        ld a,(v_ammo)
-        ld c,a
-        ld a,(v_diff)
-        ld h,a
-        call pw_sum
-        add a,a
-        add a,a
-        or h
-        ld b,a                      ; checksum << 2 | difficulty
-        ld h,0
-        ld l,c
-        add hl,hl
-        add hl,hl
-        add hl,hl
-        add hl,hl
-        add hl,hl
-        ld a,l
-        or e
-        ld l,a
-        ld a,d
-        rlca
-        rlca
-        rlca
-        rlca
-        or h
-        ld h,a
-        ld e,b
-        ld a,l
-        xor PW_K0
-        ld l,a
-        ld a,h
-        xor PW_K1
-        ld h,a
-        ld a,e
-        xor PW_K2
-        ld e,a
-        ld ix,v_pwtext
+        srl a                       ; health / 4, rounded up (1..25)
         ld b,5
-pm_1:   ld a,l
-        and 31
-        push hl
+        call pw_puta
+        ld a,(v_ammo)
+        ld b,7
+        call pw_puta
+        ld a,(v_level)
+        inc a                       ; the next floor (1..NLEVEL-1)
+        ld b,4
+        call pw_puta
+        ld a,(v_diff)
+        ld b,2
+        call pw_puta
+        ld hl,(v_gsecs)
+        ld a,h
+        cp 40h
+        jr c,pm_t
+        ld hl,3FFFh                 ; (at most 4.5 hours)
+pm_t:   ld b,14
+        call pw_put
+        ld hl,(v_tkills)
+        ld a,h
+        cp 2
+        jr c,pm_k
+        ld hl,511
+pm_k:   ld b,9
+        call pw_put
+        ld a,(v_deaths)
+        ld b,8
+        call pw_puta
+        call pw_sum
+        ld b,6
+        call pw_puta
+        call pw_key
+        xor a                       ; then 5 bits a character
+        ld (v_pwpos),a
+        ld ix,v_pwtext
+        ld b,11
+pm_1:   push bc
+        ld b,5
+        call pw_get
+        ld a,l
         ld hl,pw_abc
         add a,l
         ld l,a
         jr nc,pm_2
         inc h
 pm_2:   ld a,(hl)
-        pop hl
         ld (ix+0),a
         inc ix
-        ld c,5
-pm_3:   srl e
-        rr h
-        rr l
-        dec c
-        jr nz,pm_3
+        pop bc
         djnz pm_1
         ld (ix+0),0
         ret
-; D floor, C rounds, E health/4, H difficulty -> A checksum (6 bits)
-pw_sum: ld a,d
-        add a,c
-        add a,e
-        add a,d
-        add a,h
-        add a,h
-        add a,h
-        add a,7
-        and 63
-        ret
 
-; v_pwtext (5 characters) -> Z and v_startlv, v_pwhp, v_pwammo, v_diff, v_pw
-; if right
+; v_pwtext (11 characters) -> Z and v_startlv, v_pwhp, v_pwammo, v_diff,
+; v_pwsecs, v_pwkills, v_pwdeaths, v_pw if right (NZ: wrong)
 pw_check:
-        ld hl,0
-        ld e,l
-        ld ix,v_pwtext+4
-        ld b,5
-pc_1:   ld c,5                      ; make room for 5 more bits
-pc_2:   add hl,hl
-        rl e
-        dec c
-        jr nz,pc_2
-        ld a,(ix+0)
-        push hl
+        call pw_clr
+        ld ix,v_pwtext
+        ld b,11
+pc_1:   ld a,(ix+0)
+        push bc
         call pw_idx
-        pop hl
+        pop bc
         ret nz                      ; not one of the 32 characters
-        or l
-        ld l,a
-        dec ix
+        push bc
+        ld b,5
+        call pw_puta
+        pop bc
+        inc ix
         djnz pc_1
+        call pw_key
+        xor a
+        ld (v_pwpos),a
+        ld b,5
+        call pw_get
         ld a,l
-        xor PW_K0
-        ld l,a
-        ld a,h
-        xor PW_K1
-        ld h,a
-        ld a,e
-        xor PW_K2
-        ld b,a                      ; checksum << 2 | difficulty
-        ld a,l
-        and 31
-        ld e,a                      ; health / 4
-        ld a,h
-        rrca
-        rrca
-        rrca
-        rrca
-        and 15
-        ld d,a                      ; floor
-        add hl,hl
-        add hl,hl
-        add hl,hl
-        ld c,h
-        res 7,c                     ; rounds
-        ld a,b
-        and 3
-        cp 3
-        jr z,pc_bad
-        ld h,a                      ; difficulty
-        call pw_sum
-        ld l,a
-        ld a,b
-        rrca
-        rrca
-        and 63
-        cp l
-        ret nz
-        ld a,d                      ; floor 1..NLEVEL-1 (from the 2nd on)
-        dec a
-        cp NLEVEL-1
-        jr nc,pc_bad
-        ld a,c
-        cp 100
-        jr nc,pc_bad
-        ld a,e
         dec a
         cp 25
         jr nc,pc_bad
-        ld a,d
-        ld (v_startlv),a
-        ld a,b
-        and 3
-        ld (v_diff),a
-        ld a,c
+        inc a
+        add a,a
+        add a,a
+        ld (v_pwhp),a               ; health (4 a step)
+        ld b,7
+        call pw_get
+        ld a,l
+        cp 100
+        jr nc,pc_bad
         ld (v_pwammo),a
-        ld a,e
-        add a,a
-        add a,a
-        ld (v_pwhp),a
+        ld b,4
+        call pw_get
+        ld a,l
+        dec a
+        cp NLEVEL-1
+        jr nc,pc_bad
+        inc a
+        ld (v_startlv),a
+        ld b,2
+        call pw_get
+        ld a,l
+        cp 3
+        jr nc,pc_bad
+        ld (v_pwdiff),a
+        ld b,14
+        call pw_get
+        ld (v_pwsecs),hl
+        ld b,9
+        call pw_get
+        ld (v_pwkills),hl
+        ld b,8
+        call pw_get
+        ld a,l
+        ld (v_pwdeaths),a
+        ld b,6
+        call pw_get
+        push hl
+        ld a,(v_pwbits+6)           ; the sum over the fields alone
+        and 1
+        ld (v_pwbits+6),a
+        call pw_sum
+        pop hl
+        cp l
+        jr nz,pc_bad
+        ld a,(v_pwdiff)
+        ld (v_diff),a
         ld a,1
         ld (v_pw),a
         xor a                       ; Z: right
         ret
 pc_bad: or 1                        ; NZ: wrong
         ret
+
+; the bit buffer: cleared, from bit 0
+pw_clr: ld hl,v_pwbits
+        ld b,8                      ; (and v_pwpos)
+pk_0:   ld (hl),0
+        inc hl
+        djnz pk_0
+        ret
+; A = value, B = bits: put at v_pwpos on (low bit first)
+pw_puta:
+        ld l,a
+        ld h,0
+; HL = value, B = bits
+pw_put: srl h
+        rr l
+        jr nc,pp_1
+        push hl
+        call pw_bit
+        or (hl)
+        ld (hl),a
+        pop hl
+pp_1:   ld a,(v_pwpos)
+        inc a
+        ld (v_pwpos),a
+        djnz pw_put
+        ret
+; B = bits -> HL = the value at v_pwpos on
+pw_get: ld hl,0
+        ld c,b
+pg_1:   push hl
+        push bc
+        call pw_bit
+        and (hl)
+        pop bc
+        pop hl
+        add a,0FFh                  ; (carry: the bit is set)
+        rr h
+        rr l
+        ld a,(v_pwpos)
+        inc a
+        ld (v_pwpos),a
+        djnz pg_1
+        ld a,16
+        sub c
+        ld b,a
+pg_2:   srl h
+        rr l
+        djnz pg_2
+        ret
+; -> HL = the byte of bit v_pwpos, A = its mask
+pw_bit: ld a,(v_pwpos)
+        ld c,a
+        rrca
+        rrca
+        rrca
+        and 31
+        add a,v_pwbits & 0FFh
+        ld l,a
+        ld a,v_pwbits >> 8
+        adc a,0
+        ld h,a
+        ld a,c
+        and 7
+        inc a
+        ld c,a
+        ld a,80h
+pb_1:   rlca
+        dec c
+        jr nz,pb_1
+        ret
+; -> A = the checksum (6 bits) of the 7 bytes
+pw_sum: ld hl,v_pwbits
+        ld b,7
+        ld a,5
+ps_1:   rlca
+        add a,(hl)
+        inc hl
+        djnz ps_1
+        and 63
+        ret
+; scramble / unscramble: the 7 bytes xor a key
+pw_key: ld hl,v_pwbits
+        ld de,pw_k
+        ld b,7
+pk_1:   ld a,(de)
+        xor (hl)
+        ld (hl),a
+        inc hl
+        inc de
+        djnz pk_1
+        ret
+pw_k:   defb 0A3h,0C5h,09h,5Eh,0B2h,71h,1Ch
 
 ; A = a character -> Z and A = its number (0..31), NZ if not one of them
 pw_idx: ld hl,pw_abc
@@ -1378,13 +1448,13 @@ pwi_2:   ld a,c
         ret
 pw_abc: defb "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
 
-; type 5 characters on the title (shown as they come) -> Z if right
+; type 11 characters on the title (shown as they come) -> Z if right
 pw_entry:
         xor a
         ld (v_lastkey),a
         ld (v_pwn),a
         ld hl,v_pwtext
-        ld b,5
+        ld b,11
 pe_0:   ld (hl),'-'
         inc hl
         djnz pe_0
@@ -1413,7 +1483,7 @@ pe_1:   push af
         ld (hl),b
         inc a
         ld (v_pwn),a
-        cp 5
+        cp 11
         jr nz,pe_lp
         call pe_show
         jp pw_check
@@ -2540,6 +2610,9 @@ hp_1:   ld (v_hp),a
         ld (v_dead),a
         ld hl,v_deaths
         inc (hl)
+        jr nz,hp_d
+        dec (hl)                    ; (at most 255)
+hp_d:
         xor a
         ld (v_dchoice),a            ; continue, unless changed
         ret
@@ -3705,6 +3778,22 @@ do_3:   call draw_text
         ret
 
 ; A = 0..255 -> three digits at (D,E)
+; HL = 0..999 -> 3 digits
+draw_num3w:
+        ld c,0
+dw3_1:  ld a,h
+        or a
+        jr nz,dw3_2
+        ld a,l
+        cp 100
+        jr c,dn3_2
+dw3_2:  ld a,l
+        sub 100
+        ld l,a
+        jr nc,dw3_3
+        dec h
+dw3_3:  inc c
+        jr dw3_1
 draw_num3:
         ld c,0
 dn3_1:  cp 100

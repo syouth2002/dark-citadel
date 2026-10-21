@@ -53,7 +53,11 @@ g.approach(ox, oy)
 check('oil picked up: 7 cells (rays up to 9)', lantern(m) == (7, 9, 9, 7) and g.getw('oil') > 300,
       str(lantern(m)))
 check('message', 'LANTERN OIL' in g.msg())
-g.setw('oil', 3)
+for _ in range(6):                           # (until it holds: the game may be
+    g.setw('oil', 3)                         # in the middle of burning it)
+    g.frame(0, 1)
+    if g.getw('oil') <= 3:
+        break
 g.frame(0, 5)
 check('burnt out: 5 cells again', lantern(m) == (5, 6, 6, 5) and g.getw('oil') == 0)
 # ---- every pickup is drawn (plain and glowing)
@@ -169,8 +173,9 @@ check('objects in sight are never skipped', missed == 0 and seen > 10, '(%d in s
 g.frame(0, 2)
 t0 = g.getw('gsecs')
 n0 = len(g.p6.flips)
-g.frame(H.K_STOP, 1)
-g.p6.stick = 0
+g.frame(H.K_STOP, 2)                         # (2: a frame may end before the keys
+g.p6.stick = 0                               # are read; it is the press that counts)
+n0 = len(g.p6.flips)
 g.p6.run_cycles(3993600 * 3)
 check('STOP: paused (no frames, the clock stopped, the music silent)',
       m[V['paused']] == 1 and len(g.p6.flips) <= n0 + 1 and g.getw('gsecs') <= t0 + 1 and g.p6.psg[10] == 0)
